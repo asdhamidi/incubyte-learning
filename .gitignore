@@ -1,3 +1,8 @@
+# day1
 day1/exercise/.venv
 day1/exercise/uv.lock
 day1/exercise/__pycache__/
+day1/exercise/__init__.py
+day1/exercise/.pytest_cache/
+day1/exercise/tests/__pycache__/
+day1/exercise/tests/__init__.py
