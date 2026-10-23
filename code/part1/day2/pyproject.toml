@@ -1,0 +1,20 @@
+[project]
+name = "day2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Asadullah Hamidi", email = "asad.hamidi119@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "duckdb>=1.5.6",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
