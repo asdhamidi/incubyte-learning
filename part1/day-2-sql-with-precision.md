@@ -12,8 +12,8 @@
 | Learn: window functions for deduplication and latest-record-per-key with ROW_NUMBER and QUALIFY | Yes | [ROW_NUMBER and QUALIFY for dedup](#row_number-and-qualify-for-dedup) |
 | Practice: in DuckDB build a small orders table and an incremental batch with duplicates and late records then write the MERGE that loads it | Yes | [Code](../code/part1/day2/), [MERGE](../code/part1/day2/sql/02_merge.sql) |
 | Exercise: run the same load twice and prove with a query that the result did not change | Yes | [Idempotency check](../code/part1/day2/sql/03_idempotency_check.sql) |
-| Exercise: write one query with UNION and one with UNION ALL over the same inputs and explain the difference in row counts | Partly | [Queries](../code/part1/day2/sql/04_union_vs_union_all.sql)|
-| Reflection: which of these would have caused a silent data error in a pipeline you have built | Pending | [Reflection](../code/part1/day2/reflection.md) |
+| Exercise: write one query with UNION and one with UNION ALL over the same inputs and explain the difference in row counts | Yes | [Queries](../code/part1/day2/sql/04_union_vs_union_all.sql)|
+| Reflection: which of these would have caused a silent data error in a pipeline you have built | Yes | [Reflection](../code/part1/day2/reflection.md) |
 
 
 ## Key learnings
