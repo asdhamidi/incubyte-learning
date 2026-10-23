@@ -1,9 +1,7 @@
-# day1
-code/part1/day1/.venv
-code/part1/day1/uv.lock
-code/part1/day1/__pycache__/
-code/part1/day1/__init__.py
-code/part1/day1/.pytest_cache/
-code/part1/day1/tests/__pycache__/
-code/part1/day1/tests/__init__.py
-code/part1/day1/.python-version
+.venv/
+__pycache__/
+.pytest_cache/
+uv.lock
+.python-version
+.zed
+.obsidian

@@ -7,6 +7,7 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 | Day | Day Topic | Starting File |
 | --- | --- | --- |
 | 1 | Incubyte Culture, Ways of Working & Setting Up to Build | [Day 1](./part1/day-1-dora-pods-values.md) |
+| 2 | SQL Precision for Pipelines | [Day 2](./part1/day-2-sql-with-precision.md) |
 
 ## Repository Structure
 
