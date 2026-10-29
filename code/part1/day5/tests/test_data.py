@@ -4,7 +4,7 @@ from pathlib import Path
 import duckdb
 import pytest
 
-from transform import flatten_order
+from ..data_checks import flatten_order
 
 COLUMNS = ["order_id", "customer_id", "created_at", "currency",
            "line_no", "sku", "qty", "unit_price", "line_total"]
@@ -24,3 +24,7 @@ def con():
             con.execute("INSERT INTO order_lines VALUES (?,?,?,?,?,?,?,?,?)",
                         [row[c] for c in COLUMNS])
     return con
+
+def test_order_id_is_not_null(con):
+    bad = con.execute("SELECT COUNT(*) FROM order_lines WHERE order_id IS NULL").fetchone()[0]
+    assert bad == 0
