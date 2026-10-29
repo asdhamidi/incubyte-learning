@@ -1,0 +1,21 @@
+{
+  "order_id": "O-1004",
+  "created_at": "2026-10-28T19:30:00Z",
+  "currency": "INR",
+  "customer": {
+    "id": "C-42",
+    "email": "priya.nair@example.com"
+  },
+  "items": [
+    {
+      "sku": "F6",
+      "qty": 3,
+      "unit_price": 499.0
+    },
+    {
+      "sku": "G7",
+      "qty": 1,
+      "unit_price": 1299.5
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "order_id": "O-1010",
+  "created_at": "2026-10-31T07:37:26Z",
+  "currency": "SGD",
+  "customer": {
+    "id": "C-77",
+    "email": "wei.lim@example.com"
+  },
+  "items": [
+    {
+      "sku": "Q6",
+      "qty": 1,
+      "unit_price": 310.0
+    },
+    {
+      "sku": "R7",
+      "qty": 7,
+      "unit_price": 4.6
+    },
+    {
+      "sku": "D4",
+      "qty": 2,
+      "unit_price": 98.75
+    }
+  ]
+}

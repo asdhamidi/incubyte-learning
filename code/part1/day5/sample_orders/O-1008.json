@@ -1,0 +1,26 @@
+{
+  "order_id": "O-1008",
+  "created_at": "2026-10-30T16:48:20Z",
+  "currency": "USD",
+  "customer": {
+    "id": "C-90",
+    "email": "sofia.ramirez@example.com"
+  },
+  "items": [
+    {
+      "sku": "M3",
+      "qty": 6,
+      "unit_price": 1.15
+    },
+    {
+      "sku": "N4",
+      "qty": 3,
+      "unit_price": 12.99
+    },
+    {
+      "sku": "A1",
+      "qty": 1,
+      "unit_price": 9.99
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "order_id": "O-1005",
+  "created_at": "2026-10-29T00:59:47Z",
+  "currency": "JPY",
+  "customer": {
+    "id": "C-8",
+    "email": "kenji.sato@example.com"
+  },
+  "items": [
+    {
+      "sku": "B2",
+      "qty": 2,
+      "unit_price": 3200
+    },
+    {
+      "sku": "H8",
+      "qty": 4,
+      "unit_price": 850
+    },
+    {
+      "sku": "A1",
+      "qty": 1,
+      "unit_price": 1100
+    },
+    {
+      "sku": "J9",
+      "qty": 1,
+      "unit_price": 5400
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "order_id": "O-1009",
+  "created_at": "2026-10-30T22:03:55Z",
+  "currency": "EUR",
+  "customer": {
+    "id": "C-5",
+    "email": "tomas.novak@example.com"
+  },
+  "items": [
+    {
+      "sku": "P5",
+      "qty": 2,
+      "unit_price": 64.9
+    },
+    {
+      "sku": "B2",
+      "qty": 1,
+      "unit_price": 22.0
+    }
+  ]
+}

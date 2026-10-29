@@ -1,0 +1,27 @@
+import json
+from pathlib import Path
+
+import pytest
+
+from ..flatten_orders import validate_order
+
+SAMPLES = sorted(Path("sample_orders").glob("*.json"))
+
+
+def test_there_are_sample_orders():
+    assert SAMPLES, "no sample orders found in sample_orders/"
+
+
+def test_validator_exists():
+    sample_order = {
+        "order_id": "O-1001",
+        "created_at": "2026-10-27T10:15:00Z",
+        "currency": "USD",
+        "customer": {"id": "C-1", "email": "asha@example.com"},
+        "items": [
+            {"sku": "A1", "qty": 2, "unit_price": 9.99},
+            {"sku": "B2", "qty": 1, "unit_price": 24.5},
+        ],
+    }
+
+    assert validate_order(sample_order) == []
