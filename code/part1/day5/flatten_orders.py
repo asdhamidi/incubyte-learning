@@ -9,14 +9,23 @@ REQUIRED_CUSTOMER_FIELDS = {"id": str}
 REQUIRED_ITEM_FIELDS = {"sku": str, "qty": int, "unit_price": (int, float)}
 
 
-def validate_order(order):
+def _check(obj, spec, where):
     problems = []
-    for order_field in REQUIRED_ORDER_FIELDS:
-        if order_field not in order:
-            problems.append(f"order: missing field '{order_field}'")
+    for field, expected in spec.items():
+        if field not in obj:
+            problems.append(f"{where}: missing field '{field}'")
+        elif not isinstance(obj[field], expected):
+            problems.append(
+                f"{where}: field '{field}' has type {type(obj[field]).__name__}"
+            )
+    return problems
 
-    for customer_field in REQUIRED_CUSTOMER_FIELDS:
-        if customer_field not in order["customer"]:
-            problems.append(f"customer: missing field '{customer_field}'")
 
+def validate_order(order):
+    problems = _check(order, REQUIRED_ORDER_FIELDS, "order")
+    if isinstance(order.get("customer"), dict):
+        problems += _check(order["customer"], REQUIRED_CUSTOMER_FIELDS, "customer")
+    if isinstance(order.get("items"), list):
+        for i, item in enumerate(order["items"]):
+            problems += _check(item, REQUIRED_ITEM_FIELDS, f"items[{i}]")
     return problems

@@ -39,3 +39,8 @@ def test_nested_missing_field_is_reported():
     order = copy.deepcopy(sample_order)
     del order["customer"]["id"]
     assert "customer: missing field 'id'" in validate_order(order)
+
+def test_wrong_type_is_reported():
+    order = copy.deepcopy(sample_order)
+    order["items"][0]["qty"] = "two"
+    assert any("qty" in p for p in validate_order(order))
