@@ -96,18 +96,24 @@ The tool guarantees movement, not meaning. Landing tables should be treated like
 ## Hands-on: exercises
 
 ### Setup
+Code: [`code/part1/day5/`](../code/part1/day5/)
+
 - `pytest` and `duckdb` in a virtual environment, Python 3.9 or newer.
-- `flatten_order` (in `data_checks.py`) returns one row per item and raises a clear `ValueError` when `items` is missing.
-- `sample_orders/` holds 10 JSON files shaped like the test `ORDER` (`O-1001` to `O-1010`), with different order IDs, customers, timestamps, items and eight currencies (USD, EUR, GBP, INR, JPY, CAD, AUD, SGD). They stand in for upstream payloads.
+- `flatten_order` (in [`data_checks.py`](../code/part1/day5/data_checks.py)) returns one row per item and raises a clear `ValueError` when `items` is missing.
+- [`sample_orders/`](../code/part1/day5/sample_orders/) holds 10 JSON files shaped like the test `ORDER` (`O-1001` to `O-1010`), with different order IDs, customers, timestamps, items and eight currencies (USD, EUR, GBP, INR, JPY, CAD, AUD, SGD). They stand in for upstream payloads.
 
 ### Contract test exercise
-- The contract (in `flatten_orders.py`) lists every field `flatten_order` reads with its expected type: order-level fields, `customer.id` and the item fields.
+Code: [`flatten_orders.py`](../code/part1/day5/flatten_orders.py) (contract and validator), [`tests/test_validator.py`](../code/part1/day5/tests/test_validator.py) (tests)
+
+- The contract (in [`flatten_orders.py`](../code/part1/day5/flatten_orders.py)) lists every field `flatten_order` reads with its expected type: order-level fields, `customer.id` and the item fields.
 - A validator takes one order and returns a list of problems. It checks the `customer` fields only if `customer` exists, checks every item and names which one is wrong, and reports all problems at once.
 - Unit tests for the validator use an order defined inside the test file, deep-copied before one thing is broken. Cases: missing top-level field, missing nested field, wrong type.
 - A boundary test, parametrized per file, asserts the validator returns no problems for each file in `sample_orders`.
 - **Proof it works:** rename `customer.id` to `customer.customer_id` in one sample file. Exactly one test (the boundary test for that file) should fail, naming the missing field. Then undo the edit.
 
 ### Data test exercise
+Code: [`tests/test_data.py`](../code/part1/day5/tests/test_data.py) (fixture and the three data tests), using `flatten_order` from [`data_checks.py`](../code/part1/day5/data_checks.py)
+
 - A pytest fixture builds an in-memory DuckDB table `order_lines` by running `flatten_order` over every sample file, so each test gets a fresh table.
 - Three tests, each one SQL query that counts bad rows and asserts 0:
     - **Not null** on `order_id`.
