@@ -10,6 +10,7 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 | 2 | SQL Precision for Pipelines | [Day 2](./part1/day-2-sql-with-precision.md) |
 | 3 | Azure Data Services | [Day 3](./part1/day-3-azure-data-services.md) |
 | 4 | Azure Data Factory In Depth | [Day 4](./part1/day-4-azure-data-factory-in-depth.md) |
+| 5 | Testing Data Pipelines | [Day 5](./part1/day-5-testing-data-pipelines.md) |
 
 ## Repository Structure
 
@@ -20,7 +21,10 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 │   ├── day-1-dora-pods-values.md
 │   ├── day-2-sql-with-precision.md
 │   ├── day-3-azure-data-services.md
-│   └── day-4-azure-data-factory-in-depth.md
+│   ├── day-4-azure-data-factory-in-depth.md
+│   └── day-5-testing-data-pipelines.md
+├── assets/                                # Screenshots used in the notes
+│   └── day4/
 └── code/                                  # Hands-on exercises
     └── part1/
         ├── day1/                          # Record cleaner (Python)
@@ -30,20 +34,32 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
         │   ├── reflection.md
         │   └── tests/
         │       └── test_record_cleaner.py
-        └── day2/                          # Incremental MERGE in DuckDB (SQL + Python)
+        ├── day2/                          # Incremental MERGE in DuckDB (SQL + Python)
+        │   ├── README.md
+        │   ├── pipeline.py
+        │   ├── merge_and_idempotency.py
+        │   ├── union.py
+        │   ├── pyproject.toml
+        │   ├── reflection.md
+        │   ├── sql/
+        │   │   ├── 01_setup.sql
+        │   │   ├── 02_merge.sql
+        │   │   ├── 03_idempotency_check.sql
+        │   │   └── 04_union_vs_union_all.sql
+        │   └── tests/
+        │       ├── conftest.py
+        │       ├── test_orders_data.py
+        │       └── test_pipeline.py
+        └── day5/                          # Testing a data pipeline (Python)
             ├── README.md
-            ├── pipeline.py
-            ├── merge_and_idempotency.py
-            ├── union.py
+            ├── data_checks.py
+            ├── flatten_orders.py
+            ├── exercise1.py
+            ├── demonstration.py
             ├── pyproject.toml
-            ├── reflection.md
-            ├── sql/
-            │   ├── 01_setup.sql
-            │   ├── 02_merge.sql
-            │   ├── 03_idempotency_check.sql
-            │   └── 04_union_vs_union_all.sql
+            ├── sample_orders/             # 10 sample order JSON files
             └── tests/
-                ├── conftest.py
-                ├── test_orders_data.py
-                └── test_pipeline.py
+                ├── test_data.py
+                ├── test_exercise1.py
+                └── test_validator.py
 ```

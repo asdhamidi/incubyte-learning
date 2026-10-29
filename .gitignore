@@ -5,3 +5,6 @@ uv.lock
 .python-version
 .zed
 .obsidian
+pyproject.toml
+code/**/README.md
+code/**/src/
