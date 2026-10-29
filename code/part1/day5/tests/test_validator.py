@@ -25,3 +25,8 @@ def test_validator_exists():
     }
 
     assert validate_order(sample_order) == []
+
+@pytest.mark.parametrize("path", SAMPLES, ids=lambda p: p.name)
+def test_sample_orders_meet_the_contract(path):
+    order = json.loads(path.read_text())
+    assert validate_order(order) == []
