@@ -14,4 +14,9 @@ def validate_order(order):
     for order_field in REQUIRED_ORDER_FIELDS:
         if order_field not in order:
             problems.append(f"order: missing field '{order_field}'")
+
+    for customer_field in REQUIRED_CUSTOMER_FIELDS:
+        if customer_field not in order["customer"]:
+            problems.append(f"customer: missing field '{customer_field}'")
+
     return problems

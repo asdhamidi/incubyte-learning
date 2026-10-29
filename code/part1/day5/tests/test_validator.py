@@ -34,3 +34,8 @@ def test_missing_field_is_reported():
     order = copy.deepcopy(sample_order)
     del order["currency"]
     assert "order: missing field 'currency'" in validate_order(order)
+
+def test_nested_missing_field_is_reported():
+    order = copy.deepcopy(sample_order)
+    del order["customer"]["id"]
+    assert "customer: missing field 'id'" in validate_order(order)
