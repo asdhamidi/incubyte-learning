@@ -36,3 +36,10 @@ def test_order_id_and_line_no_are_unique(con):
             GROUP BY order_id, line_no HAVING COUNT(*) > 1)
     """).fetchone()[0]
     assert bad == 0
+
+def test_currency_is_an_accepted_value(con):
+    bad = con.execute("""
+        SELECT COUNT(*) FROM order_lines
+        WHERE currency IS NULL OR currency NOT IN ('USD', 'EUR', 'GBP', 'INR', 'JPY', 'CAD', 'AUD', 'SGD')
+    """).fetchone()[0]
+    assert bad == 0
