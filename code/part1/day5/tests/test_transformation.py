@@ -42,3 +42,28 @@ def test_flatten_json_nested_json():
     }
 
     assert flatten_json(nested_json) == flattened_json
+
+def test_flatten_json_2nd_order_nested_json():
+    nested_json = {
+        "name": "adam",
+        "work": {
+            "company": "Incubyte",
+            "engagement": {
+                "client": "ABC",
+                "role": "Data Craftsperson"
+            }
+        },
+        "address": {"city": "Mumbai", "state": "Maharashtra", "country": "India"},
+    }
+
+    flattened_json = {
+        "name": "adam",
+        "company": "Incubyte",
+        "client": "ABC",
+        "role": "Data Craftsperson",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "country": "India",
+    }
+
+    assert flatten_json(nested_json) == flattened_json
