@@ -28,3 +28,11 @@ def con():
 def test_order_id_is_not_null(con):
     bad = con.execute("SELECT COUNT(*) FROM order_lines WHERE order_id IS NULL").fetchone()[0]
     assert bad == 0
+
+def test_order_id_and_line_no_are_unique(con):
+    bad = con.execute("""
+        SELECT COUNT(*) FROM (
+            SELECT order_id, line_no FROM order_lines
+            GROUP BY order_id, line_no HAVING COUNT(*) > 1)
+    """).fetchone()[0]
+    assert bad == 0
