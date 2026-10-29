@@ -1,15 +1,10 @@
 import pytest
-from transform import flatten_json
+from ..main import flatten_json
 
 
-def test_one_row_per_item():
-    nested_json = {
-        "name": "adam",
-        "designation": "SC1",
-        "address": {"city": "Mumbai", "state": "Maharashtra", "country": "India"},
-    }
 
-    flattened_json = {
+def test_flatten_json_exists():
+    test_json = {
         "name": "adam",
         "designation": "SC1",
         "city": "Mumbai",
@@ -17,4 +12,15 @@ def test_one_row_per_item():
         "country": "India",
     }
 
-    assert flatten_json(nested_json) == flattened_json
+    result_json = {
+        "name": "adam",
+        "designation": "SC1",
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "country": "India",
+    }
+
+    assert flatten_json(test_json) == result_json
+
+def test_flatten_json_empty_json():
+    assert flatten_json({}) == {}
