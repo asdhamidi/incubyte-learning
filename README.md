@@ -11,6 +11,7 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 | 3 | Azure Data Services | [Day 3](./part1/day-3-azure-data-services.md) |
 | 4 | Azure Data Factory In Depth | [Day 4](./part1/day-4-azure-data-factory-in-depth.md) |
 | 5 | Testing Data Pipelines | [Day 5](./part1/day-5-testing-data-pipelines.md) |
+| 6 | Modelling Layers, Single Source of Truth & Data Quality | [Day 6](./part1/day-6-modelling-layers-single-source-of-truth-and-data-quality.md) |
 
 ## Repository Structure
 
@@ -22,7 +23,8 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 │   ├── day-2-sql-with-precision.md
 │   ├── day-3-azure-data-services.md
 │   ├── day-4-azure-data-factory-in-depth.md
-│   └── day-5-testing-data-pipelines.md
+│   ├── day-5-testing-data-pipelines.md
+│   └── day-6-modelling-layers-single-source-of-truth-and-data-quality.md
 ├── assets/                                # Screenshots used in the notes
 │   └── day4/
 └── code/                                  # Hands-on exercises
@@ -50,16 +52,26 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
         │       ├── conftest.py
         │       ├── test_orders_data.py
         │       └── test_pipeline.py
-        └── day5/                          # Testing a data pipeline (Python)
+        ├── day5/                          # Testing a data pipeline (Python)
+        │   ├── README.md
+        │   ├── data_checks.py
+        │   ├── flatten_orders.py
+        │   ├── exercise1.py
+        │   ├── demonstration.py
+        │   ├── pyproject.toml
+        │   ├── sample_orders/             # 10 sample order JSON files
+        │   └── tests/
+        │       ├── test_data.py
+        │       ├── test_exercise1.py
+        │       └── test_validator.py
+        └── day6/                          # Layers, one source of truth, incident trace (DuckDB)
             ├── README.md
-            ├── data_checks.py
-            ├── flatten_orders.py
-            ├── exercise1.py
-            ├── demonstration.py
             ├── pyproject.toml
-            ├── sample_orders/             # 10 sample order JSON files
-            └── tests/
-                ├── test_data.py
-                ├── test_exercise1.py
-                └── test_validator.py
+            ├── practice/
+            │   └── practice.py
+            └── exercise/
+                ├── incident_setup.py
+                ├── explore.py
+                ├── message_to_client.md
+                └── postmortem.md
 ```

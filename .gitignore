@@ -6,5 +6,5 @@ uv.lock
 .zed
 .obsidian
 pyproject.toml
-code/**/README.md
 code/**/src/
+*.duckdb
