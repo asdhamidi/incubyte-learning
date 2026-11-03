@@ -12,6 +12,7 @@ def orders(con):
 
 # --- the input data ---------------------------------------------------------
 
+
 def test_raw_orders_contains_duplicate_keys(loaded):
     duplicated = loaded.execute(
         "SELECT order_id FROM raw_orders GROUP BY order_id HAVING COUNT(*) > 1 ORDER BY order_id"
@@ -41,6 +42,7 @@ def test_intermediate_orders_starts_with_unique_keys(loaded):
 
 
 # --- the data after the merge -----------------------------------------------
+
 
 def test_new_order_is_inserted(loaded):
     pipeline.merge(loaded)

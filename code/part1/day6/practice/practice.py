@@ -1,4 +1,5 @@
 """Day 6 practice solution: one definition of 'active customers', in plain DuckDB views."""
+
 import duckdb
 
 con = duckdb.connect()
@@ -6,7 +7,7 @@ con = duckdb.connect()
 # ------------------------------------------------------------------ RAW
 con.execute("""CREATE TABLE raw_orders (
     order_id VARCHAR, customer_id VARCHAR, email VARCHAR, status VARCHAR,
-    amount DOUBLE, order_ts TIMESTAMP)""")        # order_ts is UTC
+    amount DOUBLE, order_ts TIMESTAMP)""")  # order_ts is UTC
 con.execute("""INSERT INTO raw_orders VALUES
   ('O-1' ,'C-1','a@x.com'        ,'completed',100,'2026-10-20 10:00'),
   ('O-2' ,'C-2','b@x.com'        ,'cancelled', 60,'2026-10-15 09:00'),
@@ -47,23 +48,50 @@ con.execute("""CREATE VIEW active_customers_mtd AS   -- month to date, UTC, coun
 print("RESULT")
 print("  old marketing:", con.execute("SELECT n FROM old_marketing").fetchone()[0])
 print("  old finance  :", con.execute("SELECT n FROM old_finance").fetchone()[0])
-print("  new metric   :", con.execute("SELECT active_customers FROM active_customers_mtd").fetchone()[0])
+print(
+    "  new metric   :",
+    con.execute("SELECT active_customers FROM active_customers_mtd").fetchone()[0],
+)
 
 # ------------------------------------------------------------------ TESTS: each query returns the bad rows
 CHECKS = [
-    ("order_id is unique",            "uniqueness",   "error",
-     "SELECT order_id FROM stg_orders GROUP BY 1 HAVING COUNT(*) > 1"),
-    ("order_id is not null",          "completeness", "error",
-     "SELECT * FROM stg_orders WHERE order_id IS NULL"),
-    ("customer_id is not null",       "completeness", "error",
-     "SELECT * FROM stg_orders WHERE customer_id IS NULL"),
-    ("status is an accepted value",   "validity",     "error",
-     "SELECT * FROM stg_orders WHERE status IS NULL OR status NOT IN ('completed','cancelled')"),
-    ("one row per as_of_date",        "uniqueness",   "error",
-     "SELECT as_of_date FROM active_customers_mtd GROUP BY 1 HAVING COUNT(*) > 1"),
-    ("one email is one account",      "uniqueness",   "warn",
-     """SELECT email_normalized, COUNT(DISTINCT customer_id) FROM stg_orders
-        GROUP BY 1 HAVING COUNT(DISTINCT customer_id) > 1"""),
+    (
+        "order_id is unique",
+        "uniqueness",
+        "error",
+        "SELECT order_id FROM stg_orders GROUP BY 1 HAVING COUNT(*) > 1",
+    ),
+    (
+        "order_id is not null",
+        "completeness",
+        "error",
+        "SELECT * FROM stg_orders WHERE order_id IS NULL",
+    ),
+    (
+        "customer_id is not null",
+        "completeness",
+        "error",
+        "SELECT * FROM stg_orders WHERE customer_id IS NULL",
+    ),
+    (
+        "status is an accepted value",
+        "validity",
+        "error",
+        "SELECT * FROM stg_orders WHERE status IS NULL OR status NOT IN ('completed','cancelled')",
+    ),
+    (
+        "one row per as_of_date",
+        "uniqueness",
+        "error",
+        "SELECT as_of_date FROM active_customers_mtd GROUP BY 1 HAVING COUNT(*) > 1",
+    ),
+    (
+        "one email is one account",
+        "uniqueness",
+        "warn",
+        """SELECT email_normalized, COUNT(DISTINCT customer_id) FROM stg_orders
+        GROUP BY 1 HAVING COUNT(DISTINCT customer_id) > 1""",
+    ),
 ]
 print("\nTESTS")
 for name, dim, severity, sql in CHECKS:
@@ -72,8 +100,20 @@ for name, dim, severity, sql in CHECKS:
     print(f"  {outcome:5}{name:32}[{dim}]  {bad if bad else ''}")
 
 # ------------------------------------------------------------------ MIGRATION: old names now point at the one definition
-con.execute("""CREATE VIEW marketing_active_customers AS SELECT as_of_date, active_customers FROM active_customers_mtd""")
-con.execute("""CREATE VIEW finance_active_customers   AS SELECT as_of_date, active_customers FROM active_customers_mtd""")
+con.execute(
+    """CREATE VIEW marketing_active_customers AS SELECT as_of_date, active_customers FROM active_customers_mtd"""
+)
+con.execute(
+    """CREATE VIEW finance_active_customers   AS SELECT as_of_date, active_customers FROM active_customers_mtd"""
+)
 print("\nMIGRATION  old table names now read the single definition:")
-print("  marketing_active_customers:", con.execute("SELECT active_customers FROM marketing_active_customers").fetchone()[0])
-print("  finance_active_customers  :", con.execute("SELECT active_customers FROM finance_active_customers").fetchone()[0])
+print(
+    "  marketing_active_customers:",
+    con.execute("SELECT active_customers FROM marketing_active_customers").fetchone()[
+        0
+    ],
+)
+print(
+    "  finance_active_customers  :",
+    con.execute("SELECT active_customers FROM finance_active_customers").fetchone()[0],
+)

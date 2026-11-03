@@ -31,7 +31,9 @@ def test_idempotency_diff_returns_diff_counts_and_sums(loaded):
     pipeline.snapshot(loaded)
     pipeline.merge(loaded)
 
-    diff_rows, rows_run1, rows_run2, sum_run1, sum_run2 = pipeline.idempotency_diff(loaded)
+    diff_rows, rows_run1, rows_run2, sum_run1, sum_run2 = pipeline.idempotency_diff(
+        loaded
+    )
 
     assert (diff_rows, rows_run1, rows_run2) == (0, 5, 5)
     assert sum_run1 == sum_run2
