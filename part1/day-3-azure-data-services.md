@@ -113,7 +113,7 @@ Managed relational database based on SQL Server. Equivalent of **Amazon RDS** fo
 - **Linked service:** the connection definition. Answers "where is the data?" (a storage account, a SQL database).
 - **Dataset:** a named pointer to data inside a linked service, such as a file path or table. Holds the format details (delimiter, header row, encoding). Answers "what is the data?"
 - **Activity:** one step. Copy moves data, Delete removes it, Lookup and Get Metadata read information, If Condition branches.
-- **Pipeline:** a group of activities run as one workflow. Arrows set order and conditions: green (on success), red (on failure), grey (on completion), blue (on skip).
+- **Pipeline:** a group of activities run as one workflow. Arrows set order and conditions: green (on success), red (on failure), blue (on completion), grey (on skip).
 - **Trigger:** starts a pipeline. Types: manual, schedule, storage event, tumbling window.
 - **Parameters and expressions:** pipelines and datasets take parameters. Expressions start with `@`, e.g. `@utcnow()` for the current time and `@pipeline().RunId` for the run ID.
 - **System variables:** values ADF provides. `$$FILEPATH` in a Copy activity gives the source file path. It is a Copy-activity variable, written without `@`.
@@ -235,7 +235,7 @@ CREATE OR REPLACE STAGE azure_stage
   URL = 'azure://<storage-account>.blob.core.windows.net/snowflake-in/'
   STORAGE_INTEGRATION = azure_int;
 
-CREATE OR REPLACE FILE FORMAT tsv_format
+CREATE OR REPLACE FILE FORMAT csv_format
   TYPE = CSV
   FIELD_DELIMITER = ','
   SKIP_HEADER = 1
@@ -268,7 +268,7 @@ FROM (
          METADATA$FILENAME
   FROM @azure_stage
 )
-FILE_FORMAT = (FORMAT_NAME = tsv_format)
+FILE_FORMAT = (FORMAT_NAME = csv_format)
 ON_ERROR = 'ABORT_STATEMENT';
 ```
 - The SELECT maps file columns by position (`$1` to `$16`).
@@ -310,6 +310,6 @@ The load is an hour late but nothing is lost. Things that can still go wrong:
 - **Retry and alerting:** retries on the activity, and failures routed to an Azure Monitor alert.
 
 ## Azure Reflection 
-The core concepts of cloud, IAM, services, and things like that did feel synonymous. I was able to find corollaries of various services of AWS in Azure - Glue + Step Function became ADF, S3 became Blob Storage, and Redshift became Azure SQL. I now know how to do the work that I can do in AWS, in Azure, too. The fundamentals remains the same across the cloud boundaries, however there can be some gaps in exactly what AWS offers vs what Azure offers, or atleast in the length and breadth I have gone through.
+The core concepts of cloud, IAM, services, and things like that did feel synonymous. I was able to find corollaries of various services of AWS in Azure - Glue + Step Function became ADF, S3 became Blob Storage, and RDS became Azure SQL Database (Redshift is closer to Azure Synapse, which I did not use). I now know how to do the work that I can do in AWS, in Azure, too. The fundamentals remains the same across the cloud boundaries, however there can be some gaps in exactly what AWS offers vs what Azure offers, or atleast in the length and breadth I have gone through.
 
 What did not carry over feels like bit of personal snag or opinion, I felt AWS's hierarchy and setup is a lot more simpler and organized. I did not exactly get the 1:1 for IAM across these two. I feel that remains a gap that I will have to further prod upon. I also feel lack of certain services like EMR or Aurora, but that just might be lack of exposure on my part.

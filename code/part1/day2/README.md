@@ -1,6 +1,6 @@
 # Day 2 Exercise: Incremental MERGE in DuckDB
 
-`raw_orders` (an incremental batch with duplicate and late-arriving records) is merged into `intermediate_orders`. Built test-first.
+`raw_orders` (an incremental batch with duplicate, late-arriving and deleted records, plus a tie on `updated_at`) is merged into `intermediate_orders`. Built test-first.
 
 ## Run
 
