@@ -1,7 +1,6 @@
 import duckdb
-import pytest
-
 import pipeline
+import pytest
 
 
 @pytest.fixture

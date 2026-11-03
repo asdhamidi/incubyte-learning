@@ -1,5 +1,4 @@
 import duckdb
-
 import pipeline
 
 

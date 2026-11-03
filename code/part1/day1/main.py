@@ -1,6 +1,5 @@
-from typing_extensions import Dict
-from typing import Any
 from datetime import datetime
+from typing import Any
 
 DATE_FORMATS = ("%Y-%m-%d", "%d/%m/%Y")
 
@@ -28,7 +27,7 @@ def _trim_values(record) -> dict:
     }
 
 
-def clean_record(record: Dict) -> Dict[str, Any]:
+def clean_record(record: dict) -> dict[str, Any]:
     if record == {}:
         return {}
 

@@ -1,6 +1,6 @@
-from re import match
-from ..main import clean_record
 import pytest
+
+from ..main import clean_record
 
 
 def test_clean_record_returns_empty_list_when_no_list_given():

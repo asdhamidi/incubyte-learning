@@ -1,5 +1,4 @@
 import duckdb
-import numpy
 
 
 def pretty_print(heading, data):
