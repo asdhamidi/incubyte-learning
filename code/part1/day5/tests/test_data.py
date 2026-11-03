@@ -6,8 +6,17 @@ import pytest
 
 from ..data_checks import flatten_order
 
-COLUMNS = ["order_id", "customer_id", "created_at", "currency",
-           "line_no", "sku", "qty", "unit_price", "line_total"]
+COLUMNS = [
+    "order_id",
+    "customer_id",
+    "created_at",
+    "currency",
+    "line_no",
+    "sku",
+    "qty",
+    "unit_price",
+    "line_total",
+]
 
 
 @pytest.fixture
@@ -21,13 +30,19 @@ def con():
     for path in sorted(Path("sample_orders").glob("*.json")):
         order = json.loads(path.read_text())
         for row in flatten_order(order):
-            con.execute("INSERT INTO order_lines VALUES (?,?,?,?,?,?,?,?,?)",
-                        [row[c] for c in COLUMNS])
+            con.execute(
+                "INSERT INTO order_lines VALUES (?,?,?,?,?,?,?,?,?)",
+                [row[c] for c in COLUMNS],
+            )
     return con
 
+
 def test_order_id_is_not_null(con):
-    bad = con.execute("SELECT COUNT(*) FROM order_lines WHERE order_id IS NULL").fetchone()[0]
+    bad = con.execute(
+        "SELECT COUNT(*) FROM order_lines WHERE order_id IS NULL"
+    ).fetchone()[0]
     assert bad == 0
+
 
 def test_order_id_and_line_no_are_unique(con):
     bad = con.execute("""
@@ -36,6 +51,7 @@ def test_order_id_and_line_no_are_unique(con):
             GROUP BY order_id, line_no HAVING COUNT(*) > 1)
     """).fetchone()[0]
     assert bad == 0
+
 
 def test_currency_is_an_accepted_value(con):
     bad = con.execute("""

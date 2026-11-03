@@ -1,5 +1,3 @@
-import pytest
-
 from ..exercise1 import flatten_json
 
 
