@@ -1,5 +1,5 @@
-"""Day 6 exercise: builds incident.duckdb with raw -> staging -> intermediate -> summary.
-"""
+"""Day 6 exercise: builds incident.duckdb with raw -> staging -> intermediate -> summary."""
+
 import duckdb
 
 con = duckdb.connect("incident.duckdb")
@@ -13,8 +13,10 @@ con.execute("""CREATE TABLE raw_orders (
     order_date DATE, loaded_at TIMESTAMP)""")
 
 rows = []
-for day, n, loaded in (("2026-10-26", 200, "2026-10-27 01:00:00"),
-                       ("2026-10-27", 190, "2026-10-28 01:00:00")):
+for day, n, loaded in (
+    ("2026-10-26", 200, "2026-10-27 01:00:00"),
+    ("2026-10-27", 190, "2026-10-28 01:00:00"),
+):
     for i in range(n):
         channel = "mobile" if i % 5 in (0, 1) else "web"
         status = "cancelled" if i % 10 == 9 else "completed"
@@ -31,7 +33,9 @@ con.execute("""CREATE VIEW daily_revenue AS
     SELECT order_date, COUNT(*) AS orders, SUM(amount) AS revenue
     FROM int_valid_orders GROUP BY order_date""")
 
-print("incident.duckdb created. Tables and views: raw_orders, stg_orders, int_valid_orders, daily_revenue")
+print(
+    "incident.duckdb created. Tables and views: raw_orders, stg_orders, int_valid_orders, daily_revenue"
+)
 print()
 print("What the dashboard shows:")
 for r in con.execute("SELECT * FROM daily_revenue ORDER BY order_date").fetchall():
