@@ -6,7 +6,8 @@ import pytest
 
 from ..flatten_orders import validate_order
 
-SAMPLES = sorted(Path("sample_orders").glob("*.json"))
+SAMPLE_DIR = Path(__file__).resolve().parent.parent / "sample_orders"
+SAMPLES = sorted(SAMPLE_DIR.glob("*.json"))
 
 sample_order = {
     "order_id": "O-1001",

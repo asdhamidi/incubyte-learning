@@ -6,6 +6,8 @@ import pytest
 
 from ..data_checks import flatten_order
 
+SAMPLE_DIR = Path(__file__).resolve().parent.parent / "sample_orders"
+
 COLUMNS = [
     "order_id",
     "customer_id",
@@ -27,7 +29,9 @@ def con():
             order_id VARCHAR, customer_id VARCHAR, created_at VARCHAR, currency VARCHAR,
             line_no INTEGER, sku VARCHAR, qty INTEGER,
             unit_price DOUBLE, line_total DOUBLE)""")
-    for path in sorted(Path("sample_orders").glob("*.json")):
+    paths = sorted(SAMPLE_DIR.glob("*.json"))
+    assert paths, f"no sample orders found in {SAMPLE_DIR}"
+    for path in paths:
         order = json.loads(path.read_text())
         for row in flatten_order(order):
             con.execute(
