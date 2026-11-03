@@ -14,7 +14,7 @@ def flatten_order(order):
                 "sku": item["sku"],
                 "qty": item["qty"],
                 "unit_price": item["unit_price"],
-                "line_total": item["qty"] * item["unit_price"],
+                "line_total": item["qty"] + item["unit_price"],
             }
         )
     return rows
