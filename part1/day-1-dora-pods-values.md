@@ -8,9 +8,9 @@
 | The Independent Pod page and Values in Action page on the Incubyte playbook | Yes | [Independent Pods](#independent-pods) |
 | Reflection: Incubyte's six guiding principles are quality with pragmatism and extreme ownership and proactive collaboration and active pursuit of mastery and inviting giving and acting on feedback and ensuring client success - which one will stretch you most and why | Yes | [Reflection on Values](#reflection-on-values) |
 | Study: the four DORA metrics applied to data work - what counts as a deployment and a change failure and a time to restore for a data pipeline | Yes | [DORA Metrics](#dora-metrics) |
-| Practice: install Claude Code and the BEE and Learn plugins and run Learn on one small task | Yes | NA |
+| Practice: install Claude Code and the BEE and Learn plugins and run Learn on one small task | Yes | [Screenshot](../assets/day1/bee-plugin-ss.png) |
 | Exercise: write a small Python function that cleans one record - trims fields and normalises a date and rejects a missing id - test-first with pytest | Yes | [Code](../code/part1/day1/) |
-| Reflection: what does test-first change about how you would build a data transformation | Yes | [Reflection on Test-First Approach](../code/day1/reflection.md) |
+| Reflection: what does test-first change about how you would build a data transformation | Yes | [Reflection on Test-First Approach](../code/part1/day1/reflection.md) |
 
 ## Key learnings
 - DORA Metrics - Learnt about how we can use the DORA metrics to track the efficiency and stability of a system based on the output and problems and how to use them to course correct.
@@ -55,7 +55,7 @@ Throughput is a measure of how many changes can move through the system over a p
 Instability is a measure of how well the software deployments go.
 
 - Change Failure Rate: The ratio of deployments that require immediate intervention following a deployment. Likely resulting in a rollback of the changes or a “hotfix” to quickly remediate any issues. This metric measures the stability of the software and the effectiveness of the deployment process.
-- Deployment Recovery Rate: The ratio of deployments that are unplanned but happen as a result of an incident in production. This metric measures the ability to recover from failures and minimize downtime.
+- Deployment Rework Rate: The ratio of deployments that are unplanned but happen as a result of an incident in production. This metric shows how much of the delivery effort goes on unplanned follow-up fixes.
 
 ### DORA in Data Pipeline Context
 

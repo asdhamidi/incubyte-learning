@@ -27,6 +27,7 @@
 ## Exercises
 The exercise was fun and a good learning moment. Always liked duckdb for providing the capability to do these quick things, while still packing power. I was a bit confused by the wording of "build a small orders table and an incremental batch with duplicates and late records then write the MERGE that loads it", hence I went with my interpretation, assuming the it was idempotency and merge that was to be practiced.
 Practiced the UNION vs UNION ALL thing, as well, by replicating a very common example to showcase the silent killer of this.
+Later extended the MERGE to handle delete flags (with the same late-data guard) and to break ties in the dedup with a unique `load_seq`, with a test for each.
 
 ## Reflection
 Revisiting the core concepts of idempotency and handling late-arriving data was a refresher which helped clear some concepts. Set operations and merge was also a refresher.

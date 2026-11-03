@@ -1,6 +1,13 @@
 import pipeline
 
 
+def order_ids(con):
+    rows = con.execute(
+        "SELECT order_id FROM intermediate_orders ORDER BY order_id"
+    ).fetchall()
+    return [row[0] for row in rows]
+
+
 def test_setup_creates_raw_and_intermediate_tables(con):
     pipeline.setup(con)
 
@@ -8,13 +15,12 @@ def test_setup_creates_raw_and_intermediate_tables(con):
     assert {"raw_orders", "intermediate_orders"} <= tables
 
 
-def test_merge_changes_the_intermediate_table(loaded):
-    before = loaded.execute("SELECT COUNT(*) FROM intermediate_orders").fetchone()[0]
+def test_merge_changes_the_orders_in_the_intermediate_table(loaded):
+    assert order_ids(loaded) == [1, 2, 3, 4, 7]
 
     pipeline.merge(loaded)
 
-    after = loaded.execute("SELECT COUNT(*) FROM intermediate_orders").fetchone()[0]
-    assert after > before
+    assert order_ids(loaded) == [1, 2, 3, 5, 7, 8]
 
 
 def test_snapshot_copies_the_intermediate_table(loaded):
@@ -35,8 +41,18 @@ def test_idempotency_diff_returns_diff_counts_and_sums(loaded):
         loaded
     )
 
-    assert (diff_rows, rows_run1, rows_run2) == (0, 5, 5)
-    assert sum_run1 == sum_run2
+    assert (diff_rows, rows_run1, rows_run2) == (0, 6, 6)
+    assert sum_run1 == sum_run2 == 2660
+
+
+def test_idempotency_diff_reports_a_changed_row(loaded):
+    pipeline.merge(loaded)
+    pipeline.snapshot(loaded)
+    loaded.execute("UPDATE intermediate_orders SET amount = 1 WHERE order_id = 2")
+
+    diff_rows, *_ = pipeline.idempotency_diff(loaded)
+
+    assert diff_rows == 2
 
 
 def test_union_counts_returns_row_count_and_total_per_operator(loaded):

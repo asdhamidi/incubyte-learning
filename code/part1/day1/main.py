@@ -8,7 +8,7 @@ def _normalise_date(value):
     for date_format in DATE_FORMATS:
         try:
             return datetime.strptime(value, date_format).date().isoformat()
-        except ValueError:
+        except (TypeError, ValueError):
             continue
     raise ValueError(f"unrecognised date: {value!r}")
 
@@ -28,9 +28,6 @@ def _trim_values(record) -> dict:
 
 
 def clean_record(record: dict) -> dict[str, Any]:
-    if record == {}:
-        return {}
-
     if _missing_column(record, column_names=["id"]):
         raise ValueError("record is missing an id")
 
