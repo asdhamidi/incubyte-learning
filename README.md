@@ -13,6 +13,7 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 | 5 | Testing Data Pipelines | [Day 5](./part1/day-5-testing-data-pipelines.md) |
 | 6 | Modelling Layers, Single Source of Truth & Data Quality | [Day 6](./part1/day-6-modelling-layers-single-source-of-truth-and-data-quality.md) |
 | 7 | CI/CD & Git for Data | [Day 7](./part1/day-7-ci-cd-git-for-data.md) |
+| 8 | Analytics for Stakeholders | [Day 8](./part1/day-8-analytics-for-stakeholders.md) |
 
 ## Repository Structure
 
@@ -29,10 +30,12 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 │   ├── day-4-azure-data-factory-in-depth.md
 │   ├── day-5-testing-data-pipelines.md
 │   ├── day-6-modelling-layers-single-source-of-truth-and-data-quality.md
-│   └── day-7-ci-cd-git-for-data.md
+│   ├── day-7-ci-cd-git-for-data.md
+│   └── day-8-analytics-for-stakeholders.md
 ├── assets/                                # Screenshots used in the notes
 │   ├── day4/
-│   └── day7/
+│   ├── day7/
+│   └── day8/                              # Power BI report and its dataset
 └── code/                                  # Hands-on exercises
     └── part1/
         ├── day1/                          # Record cleaner (Python)
@@ -80,9 +83,13 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
         │       ├── explore.py
         │       ├── message_to_client.md
         │       └── postmortem.md
-        └── day7/                          # Review exercise
+        ├── day7/                          # Review exercise
+        │   ├── README.md
+        │   └── exercise-1/
+        │       ├── pr-to-review.md
+        │       └── review.md
+        └── day8/                          # Renewal rate for a stakeholder (DuckDB)
             ├── README.md
-            └── exercise-1/
-                ├── pr-to-review.md
-                └── review.md
+            ├── setup.py
+            └── explore.py
 ```
