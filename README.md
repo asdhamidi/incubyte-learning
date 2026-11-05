@@ -14,6 +14,7 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 | 6 | Modelling Layers, Single Source of Truth & Data Quality | [Day 6](./part1/day-6-modelling-layers-single-source-of-truth-and-data-quality.md) |
 | 7 | CI/CD & Git for Data | [Day 7](./part1/day-7-ci-cd-git-for-data.md) |
 | 8 | Analytics for Stakeholders | [Day 8](./part1/day-8-analytics-for-stakeholders.md) |
+| 9 | AI in Data Work | [Day 9](./part1/day-9-ai-in-data-work.md) |
 
 ## Repository Structure
 
@@ -31,65 +32,8 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 │   ├── day-5-testing-data-pipelines.md
 │   ├── day-6-modelling-layers-single-source-of-truth-and-data-quality.md
 │   ├── day-7-ci-cd-git-for-data.md
-│   └── day-8-analytics-for-stakeholders.md
-├── assets/                                # Screenshots used in the notes
-│   ├── day4/
-│   ├── day7/
-│   └── day8/                              # Power BI report and its dataset
-└── code/                                  # Hands-on exercises
-    └── part1/
-        ├── day1/                          # Record cleaner (Python)
-        │   ├── README.md
-        │   ├── main.py
-        │   ├── pyproject.toml
-        │   ├── reflection.md
-        │   └── tests/
-        │       └── test_record_cleaner.py
-        ├── day2/                          # Incremental MERGE in DuckDB (SQL + Python)
-        │   ├── README.md
-        │   ├── pipeline.py
-        │   ├── merge_and_idempotency.py
-        │   ├── union.py
-        │   ├── pyproject.toml
-        │   ├── reflection.md
-        │   ├── sql/
-        │   │   ├── 01_setup.sql
-        │   │   ├── 02_merge.sql
-        │   │   ├── 03_idempotency_check.sql
-        │   │   └── 04_union_vs_union_all.sql
-        │   └── tests/
-        │       ├── conftest.py
-        │       ├── test_orders_data.py
-        │       └── test_pipeline.py
-        ├── day5/                          # Testing a data pipeline (Python)
-        │   ├── README.md
-        │   ├── data_checks.py
-        │   ├── flatten_orders.py
-        │   ├── exercise1.py
-        │   ├── demonstration.py
-        │   ├── pyproject.toml
-        │   ├── sample_orders/             # 10 sample order JSON files
-        │   └── tests/
-        │       ├── test_data.py
-        │       ├── test_exercise1.py
-        │       └── test_validator.py
-        ├── day6/                          # Layers, one source of truth, incident trace (DuckDB)
-        │   ├── README.md
-        │   ├── pyproject.toml
-        │   ├── practice/
-        │   │   └── practice.py
-        │   └── exercise/
-        │       ├── incident_setup.py
-        │       ├── explore.py
-        │       ├── message_to_client.md
-        │       └── postmortem.md
-        ├── day7/                          # Review exercise
-        │   ├── README.md
-        │   └── exercise-1/
-        │       ├── pr-to-review.md
-        │       └── review.md
-        └── day8/                          # Renewal rate for a stakeholder (DuckDB)
-            ├── README.md
-            ├── setup.py
-            └── explore.py
+│   ├── day-8-analytics-for-stakeholders.md
+│   └── day-9-ai-in-data-work.md
+├── assets/...                                # Screenshots used in the notes                         # Power BI report and its dataset
+└── code/...                                  # Code for certain days' module
 ```

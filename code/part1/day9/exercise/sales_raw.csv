@@ -1,0 +1,18 @@
+order_id,product_id,order_ts,amount,currency,status,units
+S1,P1,2026-11-03 08:10,50.0,USD,completed,10
+S2,P2,2026-11-03 09:20,120.0,EUR,completed,4
+S3,P3,2026-11-03 10:30,40.0,GBP,completed,8
+S4,P4,2026-11-03 11:40,300.0,USD,completed,2
+S5,P5,2026-11-03 12:50,25.0,USD,completed,12
+S6,P6,2026-11-03 13:00,60.0,EUR,completed,3
+S7,P7,2026-11-03 14:10,15.0,USD,completed,9
+S8,P1,2026-11-03 15:20,70.0,USD,completed,7
+S9,P2,2026-11-03 16:30,90.0,GBP,completed,3
+S10,P3,2026-11-03 17:40,30.0,USD,cancelled,6
+S11,P4,2026-11-03 18:50,55.0,EUR,refunded,2
+S12,P5,2026-11-03 19:00,,USD,completed,1
+S13,P6,2026-11-03 20:10,3.0,USD,completed,1
+S14,P7,2026-11-03 21:20,-20.0,USD,completed,1
+S15,P1,2026-11-02 10:00,500.0,USD,completed,50
+S16,P2,2026-11-04 10:00,400.0,EUR,completed,40
+S2,P2,2026-11-03 09:20,120.0,EUR,completed,4
