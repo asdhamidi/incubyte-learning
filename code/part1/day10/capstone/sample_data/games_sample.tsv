@@ -1,0 +1,41 @@
+id	rated	created_at	last_move_at	turns	victory_status	winner	increment_code	white_id	white_rating	black_id	black_rating	moves	opening_eco	opening_name	opening_ply
+g1000x	True	1504210000000	1504210135954	80	outoftime	white	10+0	white_0	1431	black_0	2070	e4 e5 Nf3 Nc6	B01	Scandinavian Defense: Mieses-Kotroc Variation	2
+g1001x	True	1504213600000	1504213699317	23	outoftime	white	30+0	white_1	1474	black_1	1696	e4 e5 Nf3 Nc6	C00	French Defense: Normal Variation	3
+g1002x	False	1504217200000	1504217321981	84	outoftime	white	10+0	white_2	1528	black_2	1171	e4 e5 Nf3 Nc6	D10	Slav Defense	3
+g1003x	True	1504220800000	1504221465136	86	outoftime	black	30+0	white_3	2070	black_3	1328	e4 e5 Nf3 Nc6	C41	Philidor Defense	3
+g1004x	True	1504224400000	1504224763677	65	outoftime	white	15+2	white_4	1150	black_4	2099	e4 e5 Nf3 Nc6	B20	Sicilian Defense	2
+g1005x	True	1504228000000	1504228168061	86	outoftime	black	15+2	white_5	1653	black_5	1220	e4 e5 Nf3 Nc6	A00	Polish Opening	1
+g1006x	True	1504231600000	1504232309078	38	mate	black	30+0	white_6	1481	black_6	1199	e4 e5 Nf3 Nc6	E60	King's Indian Defense: Normal Variation	3
+g1007x	False	1504235200000	1504235874006	70	resign	white	5+3	white_7	1796	black_0	1644	e4 e5 Nf3 Nc6	C50	Italian Game: Giuoco Pianissimo	5
+g1008x	True	1504238800000	1504238945831	85	outoftime	black	5+3	white_8	1406	black_1	1354	e4 e5 Nf3 Nc6	B01	Scandinavian Defense: Mieses-Kotroc Variation	2
+g1009x	False	1504242400000	1504242761924	89	outoftime	black	10+0	white_0	1637	black_2	1606	e4 e5 Nf3 Nc6	C00	French Defense: Normal Variation	3
+g1010x	True	1504246000000	1504246572714	65	resign	white	10+0	white_1	1220	black_3	1624	e4 e5 Nf3 Nc6	D10	Slav Defense	3
+g1011x	True	1504249600000	1504250016644	56	outoftime	white	30+0	white_2	2085	black_4	1784	e4 e5 Nf3 Nc6	C41	Philidor Defense	3
+g1012x	True	1504253200000	1504253757128	20	mate	white	10+0	white_3	1693	black_5	1916	e4 e5 Nf3 Nc6	B20	Sicilian Defense	2
+g1013x	False	1504256800000	1504257158420	61	outoftime	white	5+3	white_4	1848	black_6	1818	e4 e5 Nf3 Nc6	A00	Polish Opening	1
+g1014x	True	1504260400000	1504260977674	19	mate	white	15+2	white_5	1123	black_0	2063	e4 e5 Nf3 Nc6	E60	King's Indian Defense: Normal Variation	3
+g1015x	False	1504264000000	1504264469940	75	mate	white	10+0	white_6	1886	black_1	1394	e4 e5 Nf3 Nc6	C50	Italian Game: Giuoco Pianissimo	5
+g1016x	True	1504267600000	1504268111434	82	resign	white	5+3	white_7	1270	black_2	1559	e4 e5 Nf3 Nc6	B01	Scandinavian Defense: Mieses-Kotroc Variation	2
+g1017x	False	1504271200000	1504271501960	31	draw	draw	10+0	white_8	1823	black_3	1525	e4 e5 Nf3 Nc6	C00	French Defense: Normal Variation	3
+g1018x	True	1504274800000	1504275368520	87	mate	white	15+2	white_0	1280	black_4	1254	e4 e5 Nf3 Nc6	D10	Slav Defense	3
+g1019x	True	1504278400000	1504279099434	84	resign	white	5+3	white_1	1369	black_5	1388	e4 e5 Nf3 Nc6	C41	Philidor Defense	3
+g1020x	True	1504282000000	1504282538825	83	outoftime	black	30+0	white_2	2075	black_6	1228	e4 e5 Nf3 Nc6	B20	Sicilian Defense	2
+g1021x	False	1504285600000	1504285725271	36	resign	white	10+0	white_3	1507	black_0	1508	e4 e5 Nf3 Nc6	A00	Polish Opening	1
+g1022x	True	1504289200000	1504289367352	12	resign	white	15+2	white_4	1313	black_1	1551	e4 e5 Nf3 Nc6	E60	King's Indian Defense: Normal Variation	3
+g1023x	True	1504292800000	1504292933731	38	draw	draw	30+0	white_5	1649	black_2	1203	e4 e5 Nf3 Nc6	C50	Italian Game: Giuoco Pianissimo	5
+g1024x	True	1504296400000	1504296957183	27	resign	white	10+0	white_6	1252	black_3	1749	e4 e5 Nf3 Nc6	B01	Scandinavian Defense: Mieses-Kotroc Variation	2
+g1025x	False	1504300000000	1504300563730	73	draw	draw	5+3	white_7	1969	black_4	1599	e4 e5 Nf3 Nc6	C00	French Defense: Normal Variation	3
+g1026x	True	1504303600000	1504304161871	32	resign	white	10+0	white_8	1187	black_5	1247	e4 e5 Nf3 Nc6	D10	Slav Defense	3
+g1027x	True	1504307200000	1504307413723	81	draw	draw	10+0	white_0	1310	black_6	2073	e4 e5 Nf3 Nc6	C41	Philidor Defense	3
+g1028x	True	1504310800000	1504311590015	45	outoftime	white	5+3	white_1	1876	black_0	1640	e4 e5 Nf3 Nc6	B20	Sicilian Defense	2
+g1029x	True	1504314400000	1504315127357	40	mate	white	15+2	white_2	2030	black_1	1271	e4 e5 Nf3 Nc6	A00	Polish Opening	1
+g1030x	True	1504318000000	1504318269629	78	outoftime	black	30+0	white_3	1925	black_2	1345	e4 e5 Nf3 Nc6	E60	King's Indian Defense: Normal Variation	3
+g1031x	True	1504321600000	1504322155179	45	mate	white	15+2	white_4	1464	black_3	1848	e4 e5 Nf3 Nc6	C50	Italian Game: Giuoco Pianissimo	5
+g1032x	False	1504325200000	1504326018254	56	draw	draw	5+3	white_5	1809	black_4	1719	e4 e5 Nf3 Nc6	B01	Scandinavian Defense: Mieses-Kotroc Variation	2
+g1033x	True	1504328800000	1504329214143	38	resign	white	30+0	white_6	1182	black_5	1325	e4 e5 Nf3 Nc6	C00	French Defense: Normal Variation	3
+g1034x	False	1504332400000	1504333144697	56	mate	black	10+0	white_7	1739	black_6	2021	e4 e5 Nf3 Nc6	D10	Slav Defense	3
+g1035x	True	1504336000000	1504336561253	34	resign	white	30+0	white_8	1954	black_0	1776	e4 e5 Nf3 Nc6	C41	Philidor Defense	3
+g1036x	False	1504339600000	1504340145659	63	outoftime	white	10+0	white_0	1908	black_1	1751	e4 e5 Nf3 Nc6	B20	Sicilian Defense	2
+g1037x	True	1504343200000	1504343418492	87	mate	white	30+0	white_1	1842	black_2	1262	e4 e5 Nf3 Nc6	A00	Polish Opening	1
+g1038x	False	1504346800000	1504347549195	56	outoftime	white	15+2	white_2	1925	black_3	1771	e4 e5 Nf3 Nc6	E60	King's Indian Defense: Normal Variation	3
+g1003x	True	1504220800000	1504221465136	86	outoftime	black	30+0	white_3	2070	black_3	1328	e4 e5 Nf3 Nc6	C41	Philidor Defense	3
