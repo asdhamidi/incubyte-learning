@@ -15,6 +15,7 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 | 7 | CI/CD & Git for Data | [Day 7](./part1/day-7-ci-cd-git-for-data.md) |
 | 8 | Analytics for Stakeholders | [Day 8](./part1/day-8-analytics-for-stakeholders.md) |
 | 9 | AI in Data Work | [Day 9](./part1/day-9-ai-in-data-work.md) |
+| 10 | Capstone: An End-to-End Pipeline | [Day 10](./part1/day-10-capstone-end-to-end-pipeline.md) |
 
 ## Repository Structure
 
@@ -33,7 +34,8 @@ Welcome to my **Incubyte Centre of Excellence (CoE) learning plan**. This reposi
 │   ├── day-6-modelling-layers-single-source-of-truth-and-data-quality.md
 │   ├── day-7-ci-cd-git-for-data.md
 │   ├── day-8-analytics-for-stakeholders.md
-│   └── day-9-ai-in-data-work.md
+│   ├── day-9-ai-in-data-work.md
+│   └── day-10-capstone-end-to-end-pipeline.md
 ├── assets/...                                # Screenshots used in the notes                         # Power BI report and its dataset
 └── code/...                                  # Code for certain days' module
 ```
