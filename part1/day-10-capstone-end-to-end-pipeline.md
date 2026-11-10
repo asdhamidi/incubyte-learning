@@ -7,7 +7,7 @@
 | Builds an end-to-end pipeline from Blob Storage to Snowflake | Yes | [Architecture](#architecture), [Cloud run](#cloud-run), [runbook](../code/part1/day10/capstone/docs/runbook_cloud.md); the sample file was landed, loaded, checked and summarised in Snowflake |
 | Tests the pipeline and runs tests in CI through a pull request | Yes | [How it was built](#how-it-was-built-test-first), [Tests and CI](#tests-and-ci), [pull request #4](https://github.com/asdhamidi/incubyte-learning/pull/4) merged with a green check, [screenshot](../assets/day10/pr_checks_green.png) |
 | Adds a data quality check with a failure plan | Yes | [Data quality check](#data-quality-check-and-failure-plan), [failure plan](../code/part1/day10/capstone/docs/dq_failure_plan.md), [tests](../code/part1/day10/capstone/tests/test_dq.py) |
-| Answers a stakeholder question with a clear metric definition | Partly | [The question and the metric](#the-question-and-the-metric), [metric definition](../code/part1/day10/capstone/docs/metric_definition.md); the answer needs the real file |
+| Answers a stakeholder question with a clear metric definition | Yes | [The question and the metric](#the-question-and-the-metric), [metric definition](../code/part1/day10/capstone/docs/metric_definition.md), [The stakeholder answer](#the-stakeholder-answer), [screenshot](../assets/day10/summary_real.png) |
 | Writes a comprehensive reflection | Pending | [Reflection on the two weeks](#reflection-on-the-two-weeks) |
 
 ## Key learnings
@@ -46,9 +46,6 @@ Lichess games file (TSV)
 | Raw | The file as delivered, all text | No logic. Never edited |
 | Staging | One row per game, with real types | Dedupe, casts and renames only |
 | Summary | A view with one row per rating-gap band | The metric rules live here and only here |
-
-- DuckDB stands in for Snowflake in tests and CI. The staging and summary SQL files are the same ones that run in Snowflake, and a test blocks DuckDB-only syntax in them. Only the load differs (`read_csv` in DuckDB, `COPY INTO` in Snowflake).
-- The Snowflake load matches columns by the header names and not by position, so a reordered file can't load values into the wrong columns.
 - Design notes: [design.md](../code/part1/day10/capstone/docs/design.md).
 
 ### How it was built, test-first
@@ -87,13 +84,6 @@ Each step started with tests that failed, then the code that made them pass, the
 ### Data quality check and failure plan
 The check is `winner_accepted_values`. In staging, `winner` must be `white`, `black` or `draw`, and never NULL. It matters because the summary only counts `white` and `black`, so a new spelling would drop games out of the metric without any error. This is the same silent failure as the `complete` status on Day 6. The check blocks the summary.
 
-When it fails:
-- **Contain:** `games_summary` is a view over staging, so staging is what gets protected. The pipeline puts `stg_games` back to its last good version and keeps the rejected build in `stg_games_rejected`, and raw keeps the new data.
-- **Tell:** the pipeline owner straight away, and the stakeholder within the hour if the summary stays stale, in plain terms.
-- **Investigate:** which values, which delivery, then the raw rows.
-- **Fix and recover:** find out what the value means, correct or map it, reload (a reload replaces the file's rows), rerun.
-- **Check it's fixed:** the check returns no rows and the counts reconcile.
-
 Tests cover an unknown value, a different case, NULL, an empty string, the summary staying unchanged after a failure, staging being put back to its last good version, the rejected build being kept, and a rerun with a fixed file recovering. Full plan: [dq_failure_plan.md](../code/part1/day10/capstone/docs/dq_failure_plan.md).
 
 ![The winner check returning no rows in Snowflake](../assets/day10/checks_empty.png)
@@ -101,7 +91,7 @@ Tests cover an unknown value, a different case, NULL, an empty string, the summa
 *The check run in Snowflake on the loaded data: no unexpected `winner` values.*
 
 ### Cloud run
-Runbook: [runbook_cloud.md](../code/part1/day10/capstone/docs/runbook_cloud.md). The sample file was landed in Blob Storage, staged in Snowflake and loaded into `raw_games`, and the numbers matched the local run.
+The sample file was landed in Blob Storage, staged in Snowflake and loaded into `raw_games`, and the numbers matched the local run.
 
 ![The capstone container in Azure with games/games_sample.tsv](../assets/day10/storage_account_files.png)
 
@@ -120,23 +110,25 @@ Runbook: [runbook_cloud.md](../code/part1/day10/capstone/docs/runbook_cloud.md).
 *The summary for the sample file in Snowflake: 25 games in four bands (25.0, 50.0, 25.0 and 18.2), the same numbers as the local run.*
 
 ### The stakeholder answer
-To be written from the real file. Run the pipeline on the real Lichess file in Snowflake (runbook steps 3 and 4), read `games_summary`, then write three sentences: the answer with the number and the comparison first, the evidence (the bands and the game counts), then the caveat (draws excluded, small bands, what the data can't say). Numbers from the sample file are not a finding and should not go here.
+The real Lichess file (`games/games.csv`, 20,058 rows) was loaded into `raw_games`, staged and summarised in Snowflake with the same SQL the tests run.
 
-### Ten-minute walkthrough
-| Time | What to show |
-|---|---|
-| 0:00 | The question and who is asking, and the metric definition in one slide |
-| 1:30 | The architecture, one picture, and why DuckDB stands in for Snowflake in tests |
-| 3:00 | The tests: run `python ci.py`, then break one thing and show CI go red, then green |
-| 5:30 | The data quality check failing on a bad `winner`, what stops, and the failure plan |
-| 7:00 | The answer to the stakeholder from the summary table, in three sentences |
-| 9:00 | What I would do next, and one question for the pod |
+![The summary in Snowflake for the real file](../assets/day10/summary_real.png)
 
-### Open items
-- The real file (`games/games.csv`, 20,058 rows) is loaded in `raw_games`, next to the 40 sample rows. The summary is a view over staging, and staging has not been rebuilt since, so the summary still shows the sample's 25 games. To get the real answer: delete the sample rows from raw, rebuild staging with `sql/stg_games.sql`, run `04_checks.sql`, then read `05_read_summary.sql` and screenshot it as `summary_real.png`.
-- Write the stakeholder answer from that result.
-- Add a screenshot of the data quality check catching a planted bad value (runbook step 5).
-- Change the Snowflake app's role on the storage account from Storage Blob Data Contributor to Reader, then retake the role assignment screenshot.
+*The summary for the real file: 14,728 decided rated games in four rating-gap bands.*
+
+| Rating gap | Games | Won by the higher-rated player | Rate |
+|---|---|---|---|
+| 1-99 | 7,053 | 3,853 | 54.6% |
+| 100-199 | 3,489 | 2,288 | 65.6% |
+| 200-399 | 2,940 | 2,317 | 78.8% |
+| 400+ | 1,246 | 1,102 | 88.4% |
+| All | 14,728 | 9,560 | 64.9% |
+
+The answer, in three sentences:
+
+> Yes: the higher-rated player wins about 65% of decisive rated games (64.9% of 14,728), and the advantage grows with the gap, from 54.6% when the ratings are within 99 points to 88.4% when they are 400 or more apart. Each band holds over a thousand games and the rate rises steadily across all four, so the pattern is not noise. This counts only rated games with a decisive result (draws, unrated games and games between equal ratings are left out), and it shows that ratings predict results, not why, and the wide bands hide differences inside each band.
+
+The overall rate is worked out from the counts (9,560 of 14,728), not by averaging the four rates.
 
 ---
 ## Reflection on the two weeks
