@@ -2,22 +2,26 @@
 
 **Date completed:** 2026-11-10 · **Time spent:** ~5 hours
 ## Success criteria
-| Criterion (copied from the planner) | Done? | Evidence (link or section below) |
-| ----------------------------------- | ----- | -------------------------------- |
-| Builds an end-to-end pipeline from Blob Storage to Snowflake | Yes | [Architecture](#architecture), [Cloud run](#cloud-run), [runbook](../code/part1/day10/capstone/docs/runbook_cloud.md); the sample file was landed, loaded, checked and summarised in Snowflake |
-| Tests the pipeline and runs tests in CI through a pull request | Yes | [How it was built](#how-it-was-built-test-first), [Tests and CI](#tests-and-ci), [pull request #4](https://github.com/asdhamidi/incubyte-learning/pull/4) merged with a green check, [screenshot](../assets/day10/pr_checks_green.png) |
-| Adds a data quality check with a failure plan | Yes | [Data quality check](#data-quality-check-and-failure-plan), [failure plan](../code/part1/day10/capstone/docs/dq_failure_plan.md), [tests](../code/part1/day10/capstone/tests/test_dq.py) |
-| Answers a stakeholder question with a clear metric definition | Yes | [The question and the metric](#the-question-and-the-metric), [metric definition](../code/part1/day10/capstone/docs/metric_definition.md), [The stakeholder answer](#the-stakeholder-answer), [screenshot](../assets/day10/summary_real.png) |
-| Writes a comprehensive reflection | Pending | [Reflection on the two weeks](#reflection-on-the-two-weeks) |
+| Criterion (copied from the planner)                            | Done? | Evidence (link or section below)                                                                                                                                                                                                            |
+| -------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Builds an end-to-end pipeline from Blob Storage to Snowflake   | Yes   | [Architecture](#architecture), [Cloud run](#cloud-run), [runbook](../code/part1/day10/capstone/docs/runbook_cloud.md); the sample file was landed, loaded, checked and summarised in Snowflake                                              |
+| Tests the pipeline and runs tests in CI through a pull request | Yes   | [How it was built](#how-it-was-built-test-first), [Tests and CI](#tests-and-ci), [pull request #4](https://github.com/asdhamidi/incubyte-learning/pull/4) merged with a green check, [screenshot](../assets/day10/pr_checks_green.png)      |
+| Adds a data quality check with a failure plan                  | Yes   | [Data quality check](#data-quality-check-and-failure-plan), [failure plan](../code/part1/day10/capstone/docs/dq_failure_plan.md), [tests](../code/part1/day10/capstone/tests/test_dq.py)                                                    |
+| Answers a stakeholder question with a clear metric definition  | Yes   | [The question and the metric](#the-question-and-the-metric), [metric definition](../code/part1/day10/capstone/docs/metric_definition.md), [The stakeholder answer](#the-stakeholder-answer), [screenshot](../assets/day10/summary_real.png) |
+| Writes a comprehensive reflection                              | Yes   | [Reflection on the two weeks](#reflection-on-the-two-weeks)                                                                                                                                                                                 |
 
 ## Key learnings
 ## Exercises
+- Creating a pipeline over Azure and Snowflake for a lichess data set to answer an interesting question of whether higher rated players beat lower rated players or not, if yes, what is the trend
 ## Reflection
+- It was a fun exercise to learn how to set it all up and to actually get an answer from a real dataset.
 ## AI use
-- Built the capstone step by step with Claude Code, test-first: each step's tests were written and seen failing before the code existed.
+- Built the capstone's scaffolding with Claude Code
 - The cloud steps (the upload and the Snowflake load) were run by me in my own accounts.
 ## Open questions
+NA
 ## Changes after review
+NA
 
 ---
 ## Notes
@@ -62,7 +66,6 @@ Each step started with tests that failed, then the code that made them pass, the
 
 - 92 tests in the capstone, and 154 across the repo in CI.
 - Mutation checks, done by breaking the code on purpose: removing the dedupe failed 6 tests, including the draws in the metric failed 4, skipping the contract gate failed 2, and skipping the rollback of staging failed 2 tests. One test of mine was too weak at first, and a mutation check showed it.
-- Two problems came up from CI and not from my own tests. The capstone's tests read their sample file relative to the working directory, which fails when CI runs from the repo root. And a module named `pipeline` clashed with Day 2's, so the capstone code moved into a `games_pipeline` package.
 
 ### Tests and CI
 | Test | What it protects | When |
@@ -132,14 +135,14 @@ The overall rate is worked out from the counts (9,560 of 14,728), not by averagi
 
 ---
 ## Reflection on the two weeks
-Looking back over the two weeks, the thing that changed most was how I start. Before, I started from the code. Now I start from the question and the definition, and I write the expected result by hand before I write any SQL. The metric framework from the analytics day and the test-first approach from the testing day ended up being the same habit: say exactly what the right answer is, then build until the pipeline agrees.
+Looking back over the two weeks, the thing that changed most was how I start. Before these two weeks, I started from the code with a rough idea of what I wanted to do and went in that direction. Now I start from the question and the definition, and I write the expected result by hand before I write any SQL or Python. The metric framework from the analytics day and the test-first approach from the testing day ended up being the same habit.
 
-A lot of the early days were refreshers that I understood better by doing them again. Idempotency, late-arriving data and the traps in MERGE and set operators were familiar, but writing the tests for them showed me how easily a result can look right and be wrong. The AWS-to-Azure mapping carried over well: Glue and Step Functions became Data Factory, S3 became Blob Storage. The part that did not map one to one was IAM and the way Azure organises tenants, subscriptions and role assignments. That showed up again in this capstone when the Snowflake app needed its own role on a new storage account.
+A lot of the early days were refreshers that I understood better by doing them again. Idempotency, late-arriving data and the traps in MERGE and set operators were familiar, but writing the tests for them showed me how a result can look right and be wrong. The AWS-to-Azure mapping was a good learning exercise in creating a mental dictionary of what I knew in AWS to Azure. I feel I have much better command over Azure now than I did two weeks back.
 
-I had set up data quality checks before, but I had not tested them properly. Building them test-first, with a planted bad row for every check, and writing down what happens when one fails, made them much more trustworthy. The same goes for CI. I had used it before without setting it up myself, and having CI catch two problems that my own tests missed (a path that only worked from one folder, and a module name clash) was the best argument for it.
+I had set up data quality checks before, but I had not tested them properly. Building them test-first, with a planted bad row for every check, and writing down what happens when one fails, made them much more trustworthy. The same goes for CI. I had used it before without setting it up myself.
 
 Where I still want to grow:
 - Cloud permissions across the two clouds, especially IAM, which I still cannot translate in my head the way I can with storage and orchestration.
 - Building and testing real models in dbt, which so far I know from notes and a project layout, not from a project of my own.
-- Power BI measures. My first report counted cancelled orders because it used plain sums, and I would like to build the measures that carry the metric definition.
 - Writing answers for stakeholders faster. The definition and the checks are slow the first time, and I want them to become a template I reuse.
+- To be able to communicate clear and well when failures happen and to be able to do a blameless postmortem.
