@@ -7,4 +7,5 @@ uv.lock
 .obsidian
 pyproject.toml
 code/**/src/
+!code/part1/day10/capstone/src/
 *.duckdb
