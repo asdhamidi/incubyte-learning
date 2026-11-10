@@ -60,13 +60,15 @@ Run `sql/snowflake/03_load.sql`. It matches columns by the header names and reco
 **Screenshot:** the `COPY INTO` result and the row count.
 
 ## 4. Transform
-Run, in order:
-1. `sql/stg_games.sql` (the same file the tests run on DuckDB)
-2. `sql/snowflake/04_checks.sql`: every query should return no rows. The last one is the data quality check.
-3. `sql/games_summary.sql`
-4. `sql/snowflake/05_read_summary.sql`: the answer, by band and overall
+`games_summary` is a view over `stg_games`, so staging is what the data quality check protects. Run, in order:
+1. `sql/snowflake/06_snapshot_staging.sql` keeps the last good staging (skip it on the very first run, when `stg_games` does not exist yet).
+2. `sql/stg_games.sql` (the same file the tests run on DuckDB).
+3. `sql/snowflake/04_checks.sql`: every query should return no rows. The last one is the data quality check.
+4. If every query returned no rows: `sql/games_summary.sql` (creates the view, only needed once), then `sql/snowflake/08_clean_up.sql`.
+5. If a query returned rows: `sql/snowflake/07_quarantine_staging.sql` instead, then follow `dq_failure_plan.md`.
+6. `sql/snowflake/05_read_summary.sql`: the answer, by band and overall.
 
-If a check returns rows, stop before step 3 and follow `dq_failure_plan.md`. That is the same rule `run_pipeline` follows locally.
+This is the same rule `run_pipeline` follows locally.
 
 **Screenshot:** the summary result, with the checks all empty.
 
@@ -81,14 +83,9 @@ WHERE winner IS NULL OR winner NOT IN ('white', 'black', 'draw')
 GROUP BY winner;   -- returns ('whtie', 1)
 ```
 
-Do not run `games_summary.sql` while this row is there. Then recover by rebuilding staging from raw:
+The summary is a view over staging, so it would now count the bad row's game out of the metric. Contain it by running `sql/snowflake/07_quarantine_staging.sql` (it needs the snapshot from `06_snapshot_staging.sql`, taken before the plant). Staging goes back to the last good version, the bad build stays in `stg_games_rejected`, and `05_read_summary.sql` shows the same numbers as before.
 
-```sql
--- sql/stg_games.sql   (rebuilds stg_games, so the bad row is gone)
--- rerun the checks: no rows
-```
-
-**Screenshot:** the check returning the bad row.
+**Screenshots:** the check returning the bad row, and the summary unchanged after the quarantine.
 
 ## Loading the real file
 Upload the real Lichess file the same way (`--container capstone`, a different file name), then repeat steps 3 to 4. Snowflake skips files it has already loaded. If you must reload a corrected file with the same name, see the note in `03_load.sql`.

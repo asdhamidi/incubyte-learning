@@ -63,3 +63,21 @@ def test_shared_sql_has_no_duckdb_only_syntax(name):
         assert duckdb_only not in sql, (
             f"{name} uses {duckdb_only}, which Snowflake lacks"
         )
+
+
+def test_the_snapshot_and_quarantine_scripts_protect_staging():
+    snapshot = script("06_snapshot_staging.sql")
+    quarantine = script("07_quarantine_staging.sql")
+    clean_up = script("08_clean_up.sql")
+
+    assert "stg_games_last_good CLONE stg_games" in snapshot
+    assert "stg_games_rejected CLONE stg_games" in quarantine
+    assert "stg_games CLONE stg_games_last_good" in quarantine
+    assert "stg_games_last_good" in clean_up
+    assert "stg_games_rejected" in clean_up
+
+
+def test_the_summary_is_created_as_a_view_over_staging():
+    summary = (SQL / "games_summary.sql").read_text()
+
+    assert "CREATE OR REPLACE VIEW games_summary" in summary
