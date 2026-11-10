@@ -90,5 +90,14 @@ The summary is a view over staging, so it would now count the bad row's game out
 ## Loading the real file
 Upload the real Lichess file the same way (`--container capstone`, a different file name), then repeat steps 3 to 4. Snowflake skips files it has already loaded. If you must reload a corrected file with the same name, see the note in `03_load.sql`.
 
+`raw_games` keeps every file that was loaded, and staging reads all of it. The synthetic sample file would therefore be counted next to the real games. Before building staging for the real answer, check which files are in raw and remove the sample's rows:
+
+```sql
+SELECT source_file, COUNT(*) FROM raw_games GROUP BY 1;
+DELETE FROM raw_games WHERE source_file = 'games/games_sample.tsv';   -- the name shown in the first query
+```
+
+Then run `06_snapshot_staging.sql`, `sql/stg_games.sql`, `04_checks.sql` and `05_read_summary.sql` as in step 4. Check the counts line up: the raw rows, the distinct ids in raw, the rows in `stg_games` (one per distinct id), and the games counted in the summary (fewer than staging, since unrated games, draws and equal ratings are left out).
+
 ## Names to settle
 - The container and folder (`capstone/games/` here), the database and schema, and which Lichess file to load.
