@@ -129,6 +129,19 @@ def test_an_empty_staging_table_gives_an_empty_summary(con):
     assert summary(con) == []
 
 
+def test_the_summary_is_a_view_so_it_follows_staging(con):
+    stage(con, game(50))
+    build_summary(con)
+
+    # a second game is added to staging, and the summary is not rebuilt
+    con.execute(
+        "INSERT INTO stg_games VALUES "
+        "('late', TRUE, 0, 1650, 1500, 'white', 'mate', 'f.tsv', NULL)"
+    )
+
+    assert read_summary(con) == [("1-99", 1, 1, 100.0), ("100-199", 1, 1, 100.0)]
+
+
 # --- the worked example from the metric definition --------------------------
 
 

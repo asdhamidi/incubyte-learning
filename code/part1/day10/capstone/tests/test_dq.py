@@ -102,10 +102,65 @@ def test_a_failed_check_keeps_the_new_data_for_investigation(
         run_pipeline(con, bad, loaded_at)
 
     in_raw = con.execute("SELECT COUNT(*) FROM raw_games WHERE id = 'bad1'").fetchone()
-    in_staging = con.execute(
-        "SELECT COUNT(*) FROM stg_games WHERE id = 'bad1'"
+    in_rejected = con.execute(
+        "SELECT COUNT(*) FROM stg_games_rejected WHERE id = 'bad1'"
     ).fetchone()
-    assert (in_raw[0], in_staging[0]) == (1, 1)
+    assert (in_raw[0], in_rejected[0]) == (1, 1)
+
+
+def test_a_failed_check_puts_staging_back_to_its_last_good_version(
+    con, sample_path, tmp_path, loaded_at
+):
+    run_pipeline(con, sample_path, loaded_at)
+    good_ids = con.execute("SELECT id FROM stg_games ORDER BY id").fetchall()
+    bad = file_with(
+        sample_path,
+        tmp_path,
+        "bad.tsv",
+        {(2, "id"): "bad1", (2, "winner"): "whtie", (3, "id"): "new1"},
+    )
+
+    with pytest.raises(DataQualityFailure):
+        run_pipeline(con, bad, loaded_at)
+
+    assert con.execute("SELECT id FROM stg_games ORDER BY id").fetchall() == good_ids
+
+
+def test_a_failed_first_run_leaves_no_staging_and_no_summary(
+    con, sample_path, tmp_path, loaded_at
+):
+    bad = file_with(sample_path, tmp_path, "bad.tsv", {(2, "winner"): "whtie"})
+
+    with pytest.raises(DataQualityFailure):
+        run_pipeline(con, bad, loaded_at)
+
+    tables = {
+        row[0]
+        for row in con.execute(
+            "SELECT table_name FROM information_schema.tables"
+        ).fetchall()
+    }
+    assert "stg_games_rejected" in tables
+    assert "stg_games" not in tables
+    assert "games_summary" not in tables
+
+
+def test_a_clean_run_clears_the_rejected_build(con, sample_path, tmp_path, loaded_at):
+    run_pipeline(con, sample_path, loaded_at)
+    bad = file_with(sample_path, tmp_path, "bad.tsv", {(2, "winner"): "whtie"})
+    with pytest.raises(DataQualityFailure):
+        run_pipeline(con, bad, loaded_at)
+
+    fixed = file_with(sample_path, tmp_path, "bad.tsv", {(2, "winner"): "white"})
+    run_pipeline(con, fixed, loaded_at)
+
+    tables = {
+        row[0]
+        for row in con.execute(
+            "SELECT table_name FROM information_schema.tables"
+        ).fetchall()
+    }
+    assert "stg_games_rejected" not in tables
 
 
 def test_the_failure_names_the_value_and_how_many_rows(

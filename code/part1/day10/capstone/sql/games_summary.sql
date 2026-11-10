@@ -1,7 +1,8 @@
 -- Summary: higher-rated win rate by rating-gap band. See docs/metric_definition.md.
 -- This is the only place the metric rules live. Runs unchanged on DuckDB and Snowflake.
--- Counts are stored next to the rate, so a total is SUM(games), never an average of rates.
-CREATE OR REPLACE TABLE games_summary AS
+-- A view over stg_games, so it always follows the last good staging (see pipeline.py).
+-- Counts sit next to the rate, so a total is SUM(games), never an average of rates.
+CREATE OR REPLACE VIEW games_summary AS
 WITH decided AS (
     -- rated, decisive games where one player is rated higher
     SELECT
