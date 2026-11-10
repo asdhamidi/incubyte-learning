@@ -87,6 +87,40 @@ The summary is a view over staging, so it would now count the bad row's game out
 
 **Screenshots:** the check returning the bad row, and the summary unchanged after the quarantine.
 
+## One command for the Snowflake steps
+Steps 3 and 4 can be run as one command instead of worksheet by worksheet. It does what `run_pipeline` does locally, against Snowflake.
+
+Needs: steps 0 to 2 done once (the container, the integration, the stage and the file format), and the file already in Blob Storage under the stage's folder.
+
+Install the connector and set the sign-in settings in your own shell. Nothing here goes in the repo or in a chat. In PowerShell:
+
+```powershell
+pip install -r requirements-snowflake.txt
+$env:SNOWFLAKE_ACCOUNT = "<orgname-accountname>"
+$env:SNOWFLAKE_USER = "<your Snowflake login name>"
+$env:SNOWFLAKE_ROLE = "ACCOUNTADMIN"
+$env:SNOWFLAKE_WAREHOUSE = "COMPUTE_WH"
+$env:SNOWFLAKE_DATABASE = "INCUBYTE_LEARNING"
+$env:SNOWFLAKE_SCHEMA = "AZURE_LEARNING"
+```
+
+The account is the part of your Snowsight address before `.snowflakecomputing.com`. Sign-in opens a browser window (SSO). To use a password instead, set `SNOWFLAKE_AUTHENTICATOR` to `snowflake` and `SNOWFLAKE_PASSWORD`.
+
+Run it from `src/`. The first argument is the file's name in the stage, and `--local-file` is an optional local copy that is checked against the contract before anything is touched:
+
+```powershell
+python -m games_pipeline.snowflake_run games.csv --local-file C:\path\to\games.csv
+```
+
+In order, it:
+1. checks the local copy against the contract (if given), before connecting
+2. replaces that file's rows in `raw_games` and loads it again, in one transaction that rolls back if the load fails
+3. keeps the last good staging, then rebuilds `stg_games`
+4. runs the data quality check. If it finds rows, staging is put back to the last good version, the rejected build is kept in `stg_games_rejected`, the reason is printed and the command exits with an error
+5. otherwise builds the `games_summary` view, clears the temporary tables and prints the summary and the overall rate, worked out from the counts
+
+Other files already in `raw_games` stay there, and staging reads all of raw. The sample file's rows would still be counted, so remove them once before reading the real answer (see "Loading the real file").
+
 ## Loading the real file
 Upload the real Lichess file the same way (`--container capstone`, a different file name), then repeat steps 3 to 4. Snowflake skips files it has already loaded. If you must reload a corrected file with the same name, see the note in `03_load.sql`.
 
