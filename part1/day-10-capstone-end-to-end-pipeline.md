@@ -1,6 +1,6 @@
 # Part 1 · Day 10 — Capstone: An End-to-End Pipeline
 
-**Date completed:** 2026-10-11 · **Time spent:** ~5 hours
+**Date completed:** 2026-11-10 · **Time spent:** ~5 hours
 ## Success criteria
 | Criterion (copied from the planner) | Done? | Evidence (link or section below) |
 | ----------------------------------- | ----- | -------------------------------- |
@@ -8,7 +8,6 @@
 | Tests the pipeline and runs tests in CI through a pull request | Yes | [How it was built](#how-it-was-built-test-first), [Tests and CI](#tests-and-ci), [pull request #4](https://github.com/asdhamidi/incubyte-learning/pull/4) merged with a green check, [screenshot](../assets/day10/pr_checks_green.png) |
 | Adds a data quality check with a failure plan | Yes | [Data quality check](#data-quality-check-and-failure-plan), [failure plan](../code/part1/day10/capstone/docs/dq_failure_plan.md), [tests](../code/part1/day10/capstone/tests/test_dq.py) |
 | Answers a stakeholder question with a clear metric definition | Partly | [The question and the metric](#the-question-and-the-metric), [metric definition](../code/part1/day10/capstone/docs/metric_definition.md); the answer needs the real file |
-| Presents the work concisely | Pending | [Ten-minute walkthrough](#ten-minute-walkthrough) |
 | Writes a comprehensive reflection | Pending | [Reflection on the two weeks](#reflection-on-the-two-weeks) |
 
 ## Key learnings
@@ -134,11 +133,10 @@ To be written from the real file. Run the pipeline on the real Lichess file in S
 | 9:00 | What I would do next, and one question for the pod |
 
 ### Open items
-- Add a screenshot of the green `CI / test` check on pull request #4.
-- Run the transform in Snowflake (runbook steps 4 and 5) and add the summary and the data quality failure screenshots.
+- The real file (`games/games.csv`, 20,058 rows) is loaded in `raw_games`, next to the 40 sample rows. The summary is a view over staging, and staging has not been rebuilt since, so the summary still shows the sample's 25 games. To get the real answer: delete the sample rows from raw, rebuild staging with `sql/stg_games.sql`, run `04_checks.sql`, then read `05_read_summary.sql` and screenshot it as `summary_real.png`.
+- Write the stakeholder answer from that result.
+- Add a screenshot of the data quality check catching a planted bad value (runbook step 5).
 - Change the Snowflake app's role on the storage account from Storage Blob Data Contributor to Reader, then retake the role assignment screenshot.
-- Check that the real file went through: `SELECT source_file, COUNT(*) FROM raw_games GROUP BY 1;` should list it. The summary screenshot shows 25 games, which is the sample file, so the real file's result still needs capturing.
-- Write the stakeholder answer from the real file's summary.
 
 ---
 ## Reflection on the two weeks

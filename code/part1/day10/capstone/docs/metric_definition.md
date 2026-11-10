@@ -36,6 +36,6 @@ Expected result for these six rows:
 Across all counted games, 1 of 3 was won by the higher-rated player (33.3%).
 
 ## Change log
-| Date | Change | Why |
-|---|---|---|
-| 2026-11-10 | First version | Capstone question agreed |
+| Date       | Change        | Why                |
+| ---------- | ------------- | ------------------ |
+| 2026-11-10 | First version | Capstone question  |
