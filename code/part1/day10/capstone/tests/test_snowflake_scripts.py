@@ -43,11 +43,11 @@ def test_the_load_records_the_file_name_line_and_time():
         assert field in load
 
 
-def test_the_file_format_is_tab_separated_with_a_header_row():
+def test_the_file_format_has_a_header_row_and_keeps_raw_as_delivered():
     stage = script("01_stage_and_format.sql")
 
     assert "PARSE_HEADER = TRUE" in stage
-    assert "FIELD_DELIMITER = '\\t'" in stage
+    assert "FIELD_DELIMITER = ','" in stage
     assert "EMPTY_FIELD_AS_NULL = FALSE" in stage  # raw keeps values as delivered
 
 
@@ -81,3 +81,15 @@ def test_the_summary_is_created_as_a_view_over_staging():
     summary = (SQL / "games_summary.sql").read_text()
 
     assert "CREATE OR REPLACE VIEW games_summary" in summary
+
+
+def test_the_file_format_is_comma_separated_with_quotes_handled():
+    stage = script("01_stage_and_format.sql")
+
+    assert "FILE FORMAT capstone_csv" in stage
+    assert "FIELD_OPTIONALLY_ENCLOSED_BY = '\"'" in stage
+    assert "tsv" not in stage.lower()
+
+
+def test_the_load_uses_the_csv_format():
+    assert "FORMAT_NAME = capstone_csv" in script("03_load.sql")

@@ -61,6 +61,8 @@ class FakeConnection:
             return self.offenders
         if "FROM games_summary ORDER BY" in statement:
             return SUMMARY
+        if statement.startswith("SELECT COUNT(*) FROM"):
+            return [(7,)]
         return []
 
 
@@ -322,3 +324,52 @@ def test_the_command_names_missing_settings_and_does_not_connect(capsys):
     assert code == 1
     assert connected == []
     assert "SNOWFLAKE_USER" in capsys.readouterr().err
+
+
+def test_the_load_uses_the_csv_file_format():
+    connection = FakeConnection()
+
+    run_in_snowflake(connection, "games.csv")
+
+    copy = connection.statements[position(connection, "COPY INTO raw_games")]
+    assert "FORMAT_NAME = capstone_csv" in copy
+
+
+# --- logging ----------------------------------------------------------------
+
+
+def test_a_clean_run_logs_each_step_in_order(caplog):
+    caplog.set_level("INFO")
+    run_in_snowflake(FakeConnection(), "games.csv")
+    text = "\n".join(record.getMessage() for record in caplog.records)
+    steps = [
+        "load games/games.csv into raw_games",
+        "raw_games now holds 7 rows",
+        "first run: no staging yet",
+        "build stg_games done",
+        "data quality check winner_accepted_values passed",
+        "build games_summary done",
+        "summary has 2 bands",
+    ]
+    positions = [text.index(s) for s in steps]
+    assert positions == sorted(positions)
+
+
+def test_a_failed_check_is_logged_as_an_error_with_the_restore(caplog):
+    caplog.set_level("INFO")
+    with pytest.raises(DataQualityFailure):
+        run_in_snowflake(
+            FakeConnection(staging_exists=True, offenders=[("whtie", 2)]), "games.csv"
+        )
+    errors = [r.getMessage() for r in caplog.records if r.levelname == "ERROR"]
+    warnings = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    assert any("FAILED" in message for message in errors)
+    assert any("last good version" in message for message in warnings)
+
+
+def test_the_password_is_never_logged(caplog):
+    caplog.set_level("DEBUG")
+    env = {**ENV, "SNOWFLAKE_PASSWORD": "s3cret-value"}
+    connect_from_env(env, connect=lambda **settings: FakeConnection())
+    assert "s3cret-value" not in caplog.text
+    assert "org-account" in caplog.text

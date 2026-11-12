@@ -14,12 +14,13 @@ CREATE OR REPLACE STAGE capstone_stage
     URL = 'azure://<storage-account>.blob.core.windows.net/capstone/games/'
     STORAGE_INTEGRATION = azure_int;
 
--- 3. Tab-separated with a header row. The header names are matched to table columns,
+-- 3. Comma-separated with a header row. The header names are matched to table columns,
 --    so the load does not depend on the column order. Empty values stay empty text,
 --    because raw keeps the file as delivered.
-CREATE OR REPLACE FILE FORMAT capstone_tsv
+CREATE OR REPLACE FILE FORMAT capstone_csv
     TYPE = CSV
-    FIELD_DELIMITER = '\t'
+    FIELD_DELIMITER = ','
+    FIELD_OPTIONALLY_ENCLOSED_BY = '"'
     PARSE_HEADER = TRUE
     EMPTY_FIELD_AS_NULL = FALSE
     ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE;

@@ -24,7 +24,7 @@ def insert_raw(con, game_id, loaded_at, source_line=2, **overrides):
     marks = ", ".join(["?"] * (len(row) + 3))
     con.execute(
         f"INSERT INTO raw_games ({names}) VALUES ({marks})",
-        [*row.values(), "extra.tsv", source_line, loaded_at],
+        [*row.values(), "extra.csv", source_line, loaded_at],
     )
 
 
@@ -101,3 +101,27 @@ def test_a_tie_in_delivery_time_is_broken_by_file_line(raw_con):
         "SELECT white_rating FROM stg_games WHERE id = 'tie1'"
     ).fetchone()[0]
     assert rating == 1800
+
+
+def test_staging_reads_the_formats_in_the_real_file(raw_con):
+    insert_raw(
+        raw_con, "fmt1", datetime(2026, 11, 11), rated="TRUE", created_at="1.50421E+12"
+    )
+    insert_raw(
+        raw_con,
+        "fmt2",
+        datetime(2026, 11, 11),
+        rated="False",
+        created_at="1504210000000",
+    )
+
+    build_staging(raw_con)
+
+    rows = {
+        row[0]: row[1:]
+        for row in raw_con.execute(
+            "SELECT id, rated, created_at_ms FROM stg_games WHERE id IN ('fmt1', 'fmt2')"
+        ).fetchall()
+    }
+    assert rows["fmt1"] == (True, 1504210000000)
+    assert rows["fmt2"] == (False, 1504210000000)

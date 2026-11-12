@@ -9,7 +9,7 @@ def count(con, sql):
     return con.execute(sql).fetchone()[0]
 
 
-def broken_copy(sample_path, tmp_path, name="games.tsv"):
+def broken_copy(sample_path, tmp_path, name="games.csv"):
     bad = tmp_path / name
     bad.write_text(sample_path.read_text().replace("winner", "result"))
     return bad
@@ -76,9 +76,33 @@ def test_a_file_that_breaks_the_contract_loads_nothing(
 def test_a_failed_file_leaves_earlier_raw_rows_untouched(
     raw_con, sample_path, tmp_path
 ):
-    bad = broken_copy(sample_path, tmp_path, name="other.tsv")
+    bad = broken_copy(sample_path, tmp_path, name="other.csv")
 
     with pytest.raises(ContractViolation):
         load_raw(raw_con, bad, datetime(2026, 11, 11, 9, 0, 0))
 
     assert count(raw_con, "SELECT COUNT(*) FROM raw_games") == 40
+
+
+def test_raw_keeps_values_exactly_as_delivered(raw_con):
+    row = raw_con.execute(
+        "SELECT rated, created_at FROM raw_games WHERE id = 'g1001x'"
+    ).fetchone()
+
+    assert row == ("TRUE", "1.50421E+12")
+
+
+def test_a_file_with_windows_line_endings_loads_cleanly(
+    con, sample_path, tmp_path, loaded_at
+):
+    # the real download uses CRLF line endings
+    crlf = tmp_path / "crlf.csv"
+    crlf.write_bytes(sample_path.read_text().replace("\n", "\r\n").encode("utf-8"))
+
+    load_raw(con, crlf, loaded_at)
+
+    rows, last_column = con.execute(
+        "SELECT COUNT(*), MAX(LENGTH(opening_ply)) FROM raw_games"
+    ).fetchone()
+    assert rows == 40
+    assert last_column == 1  # no stray carriage return on the last column

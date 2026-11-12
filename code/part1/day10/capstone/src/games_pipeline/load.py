@@ -5,10 +5,12 @@ Snowflake the raw load is a COPY INTO from the external stage (see sql/snowflake
 The staging SQL is shared by both engines.
 """
 
-import csv
+import logging
 from pathlib import Path
 
-from .contract import assert_contract
+from .contract import assert_contract, read_rows
+
+log = logging.getLogger(__name__)
 
 SQL_DIR = Path(__file__).resolve().parents[2] / "sql"
 
@@ -42,13 +44,11 @@ def _create_raw_table(con):
 
 
 def _read_rows(path):
-    with Path(path).open(newline="") as f:
-        reader = csv.reader(f, delimiter="\t", quoting=csv.QUOTE_NONE)
-        header = next(reader)
-        for line_number, cells in enumerate(reader, start=2):
-            if cells:
-                row = dict(zip(header, cells))
-                yield [row.get(c) for c in FILE_COLUMNS], line_number
+    header, *rows = read_rows(path)
+    for line_number, cells in enumerate(rows, start=2):
+        if cells:
+            row = dict(zip(header, cells))
+            yield [row.get(c) for c in FILE_COLUMNS], line_number
 
 
 def load_raw(con, path, loaded_at):
@@ -58,20 +58,22 @@ def load_raw(con, path, loaded_at):
     """
     assert_contract(path)
     name = Path(path).name
+    log.info("%s meets the contract", name)
 
     _create_raw_table(con)
     marks = ", ".join(["?"] * (len(FILE_COLUMNS) + 3))
     con.begin()
     try:
         con.execute("DELETE FROM raw_games WHERE source_file = ?", [name])
-        con.executemany(
-            f"INSERT INTO raw_games VALUES ({marks})",
-            [[*cells, name, line, loaded_at] for cells, line in _read_rows(path)],
-        )
+        rows = [[*cells, name, line, loaded_at] for cells, line in _read_rows(path)]
+        log.info("read %d rows from %s", len(rows), name)
+        con.executemany(f"INSERT INTO raw_games VALUES ({marks})", rows)
         con.commit()
     except Exception:
+        log.error("load of %s failed, rolling back", name)
         con.rollback()
         raise
+    log.info("raw_games replaced the rows of %s with %d new ones", name, len(rows))
 
 
 def run_sql_file(con, name):

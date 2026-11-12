@@ -26,7 +26,7 @@ def test_the_upload_command_targets_the_account_container_and_blob(sample_path):
         "--container-name",
         "capstone",
         "--name",
-        "games/games_sample.tsv",
+        "games/games_sample.csv",
         "--file",
         str(sample_path),
         "--auth-mode",
@@ -47,7 +47,7 @@ def test_overwrite_is_only_added_when_asked_for(sample_path):
 def test_a_trailing_slash_on_the_folder_is_ignored(sample_path):
     command = build_upload_command(sample_path, "stlearn", "capstone", "games/")
 
-    assert "games/games_sample.tsv" in command
+    assert "games/games_sample.csv" in command
 
 
 def test_a_valid_file_is_uploaded_once_and_the_blob_name_returned(sample_path):
@@ -55,7 +55,7 @@ def test_a_valid_file_is_uploaded_once_and_the_blob_name_returned(sample_path):
 
     blob = land(sample_path, "stlearn", "capstone", run=runner)
 
-    assert blob == "games/games_sample.tsv"
+    assert blob == "games/games_sample.csv"
     assert len(runner.calls) == 1
     command, check = runner.calls[0]
     assert command[1:4] == ["storage", "blob", "upload"]
@@ -63,7 +63,7 @@ def test_a_valid_file_is_uploaded_once_and_the_blob_name_returned(sample_path):
 
 
 def test_a_file_that_breaks_the_contract_is_never_uploaded(sample_path, tmp_path):
-    bad = tmp_path / "games.tsv"
+    bad = tmp_path / "games.csv"
     bad.write_text(sample_path.read_text().replace("winner", "result"))
     runner = FakeRunner()
 

@@ -6,8 +6,13 @@ build in `stg_games_rejected`, so the summary keeps showing the last good number
 the cause can be investigated. Raw keeps the new data too.
 """
 
+import logging
+
 from .checks import DQ_CHECKS, run_dq_check
 from .load import build_staging, build_summary, load_raw, read_summary
+from .log import step
+
+log = logging.getLogger(__name__)
 
 
 class DataQualityFailure(Exception):
@@ -26,35 +31,51 @@ def _table_exists(con, name):
     return count > 0
 
 
+def _count(con, table):
+    return con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+
+
 def _quarantine(con, had_staging):
     """Keep the rejected build, and put staging back to the last good one if there is one."""
     con.execute("CREATE OR REPLACE TABLE stg_games_rejected AS SELECT * FROM stg_games")
+    log.warning("rejected build kept in stg_games_rejected")
     if had_staging:
         con.execute(
             "CREATE OR REPLACE TABLE stg_games AS SELECT * FROM stg_games_last_good"
         )
         con.execute("DROP TABLE stg_games_last_good")
+        log.warning("stg_games put back to its last good version")
     else:
         con.execute("DROP TABLE stg_games")
+        log.warning("no earlier good version, stg_games removed")
 
 
 def run_pipeline(con, path, loaded_at):
-    load_raw(con, path, loaded_at)  # raises ContractViolation before anything loads
+    with step(log, f"load {path} into raw_games"):
+        load_raw(con, path, loaded_at)  # raises ContractViolation before anything loads
 
     had_staging = _table_exists(con, "stg_games")
     if had_staging:
         con.execute(
             "CREATE OR REPLACE TABLE stg_games_last_good AS SELECT * FROM stg_games"
         )
-    build_staging(con)
+        log.info("snapshot of the current staging kept as stg_games_last_good")
+    else:
+        log.info("first run: no staging yet, so no snapshot")
+    with step(log, "build stg_games"):
+        build_staging(con)
+    log.info("stg_games holds %d games after dedupe", _count(con, "stg_games"))
 
     for name in DQ_CHECKS:
         offenders = run_dq_check(con, name)
         if offenders:
+            log.error("data quality check %s FAILED", name)
             _quarantine(con, had_staging)
             raise DataQualityFailure(describe_failure(name, offenders))
+        log.info("data quality check %s passed", name)
 
-    build_summary(con)  # a view, so it follows the staging that just passed
+    with step(log, "build games_summary"):
+        build_summary(con)  # a view, so it follows the staging that just passed
     con.execute("DROP TABLE IF EXISTS stg_games_rejected")
     con.execute("DROP TABLE IF EXISTS stg_games_last_good")
     return read_summary(con)

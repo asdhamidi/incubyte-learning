@@ -7,7 +7,7 @@ Asked by a ratings or matchmaking owner, who wants to know whether ratings predi
 
 ## Architecture
 ```text
-Lichess games file (TSV)
+Lichess games file (CSV)
    -> Azure Blob Storage          container `capstone`, folder `games/`
    -> Snowflake external stage    storage integration, COPY INTO
    -> RAW_GAMES                   exact copy of the file plus file name and load time

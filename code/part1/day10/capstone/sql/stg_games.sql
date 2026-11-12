@@ -6,7 +6,7 @@ CREATE OR REPLACE TABLE stg_games AS
 SELECT
     id,
     CAST(rated AS BOOLEAN)        AS rated,
-    CAST(created_at AS BIGINT)    AS created_at_ms,
+    CAST(CAST(created_at AS DOUBLE) AS BIGINT) AS created_at_ms,
     CAST(white_rating AS INTEGER) AS white_rating,
     CAST(black_rating AS INTEGER) AS black_rating,
     winner,

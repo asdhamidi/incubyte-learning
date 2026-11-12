@@ -3,7 +3,7 @@
 -- and scan time are recorded for every row (the same lineage columns the DuckDB loader fills).
 COPY INTO raw_games
 FROM @capstone_stage
-FILE_FORMAT = (FORMAT_NAME = capstone_tsv)
+FILE_FORMAT = (FORMAT_NAME = capstone_csv)
 MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
 INCLUDE_METADATA = (
     source_file = METADATA$FILENAME,
@@ -16,7 +16,7 @@ ON_ERROR = ABORT_STATEMENT;
 -- loads zero rows. To reload a corrected file that has the same name, remove its rows
 -- first and force the load:
 --
---   DELETE FROM raw_games WHERE source_file = 'games_sample.tsv';
+--   DELETE FROM raw_games WHERE source_file = 'games/games_sample.csv';
 --   COPY INTO raw_games ... FORCE = TRUE;   -- same statement as above, plus FORCE = TRUE
 
 SELECT COUNT(*) AS raw_rows, COUNT(DISTINCT id) AS distinct_games FROM raw_games;
