@@ -14,7 +14,7 @@ class DataQualityFailure(Exception):
     """A data quality check found bad rows. The message names the check and the values."""
 
 
-def _describe(name, offenders):
+def describe_failure(name, offenders):
     values = ", ".join(f"{value!r} ({n} rows)" for value, n in offenders)
     return f"{name} failed: unexpected values {values}"
 
@@ -52,7 +52,7 @@ def run_pipeline(con, path, loaded_at):
         offenders = run_dq_check(con, name)
         if offenders:
             _quarantine(con, had_staging)
-            raise DataQualityFailure(_describe(name, offenders))
+            raise DataQualityFailure(describe_failure(name, offenders))
 
     build_summary(con)  # a view, so it follows the staging that just passed
     con.execute("DROP TABLE IF EXISTS stg_games_rejected")
