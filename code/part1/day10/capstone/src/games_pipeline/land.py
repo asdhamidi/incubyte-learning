@@ -4,7 +4,7 @@ The file is checked against the contract first, so a file that breaks it never
 reaches Blob Storage. The upload itself is the Azure CLI (`az storage blob upload`),
 signed in with `az login`.
 
-    python -m games_pipeline.land sample_data/games_sample.tsv --account <storage-account> --container capstone
+    python -m games_pipeline.land sample_data/games_sample.csv --account <storage-account> --container capstone
 """
 
 import argparse

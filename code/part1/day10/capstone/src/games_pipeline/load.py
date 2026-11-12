@@ -5,10 +5,9 @@ Snowflake the raw load is a COPY INTO from the external stage (see sql/snowflake
 The staging SQL is shared by both engines.
 """
 
-import csv
 from pathlib import Path
 
-from .contract import assert_contract
+from .contract import assert_contract, read_rows
 
 SQL_DIR = Path(__file__).resolve().parents[2] / "sql"
 
@@ -42,13 +41,11 @@ def _create_raw_table(con):
 
 
 def _read_rows(path):
-    with Path(path).open(newline="") as f:
-        reader = csv.reader(f, delimiter="\t", quoting=csv.QUOTE_NONE)
-        header = next(reader)
-        for line_number, cells in enumerate(reader, start=2):
-            if cells:
-                row = dict(zip(header, cells))
-                yield [row.get(c) for c in FILE_COLUMNS], line_number
+    header, *rows = read_rows(path)
+    for line_number, cells in enumerate(rows, start=2):
+        if cells:
+            row = dict(zip(header, cells))
+            yield [row.get(c) for c in FILE_COLUMNS], line_number
 
 
 def load_raw(con, path, loaded_at):

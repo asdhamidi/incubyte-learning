@@ -12,11 +12,11 @@ from games_pipeline.pipeline import DataQualityFailure, run_pipeline
 def file_with(sample_path, tmp_path, name, edits):
     """A copy of the sample where edits maps (line, column) to a new value."""
     lines = sample_path.read_text().splitlines()
-    header = lines[0].split("\t")
+    header = lines[0].split(",")
     for (line, column), value in edits.items():
-        cells = lines[line - 1].split("\t")
+        cells = lines[line - 1].split(",")
         cells[header.index(column)] = value
-        lines[line - 1] = "\t".join(cells)
+        lines[line - 1] = ",".join(cells)
     path = tmp_path / name
     path.write_text("\n".join(lines) + "\n")
     return path
@@ -72,7 +72,7 @@ def test_a_failed_check_keeps_the_last_good_summary(
     bad = file_with(
         sample_path,
         tmp_path,
-        "bad.tsv",
+        "bad.csv",
         {
             (2, "id"): "bad1",
             (2, "winner"): "whtie",
@@ -94,7 +94,7 @@ def test_a_failed_check_keeps_the_new_data_for_investigation(
     bad = file_with(
         sample_path,
         tmp_path,
-        "bad.tsv",
+        "bad.csv",
         {(2, "id"): "bad1", (2, "winner"): "whtie"},
     )
 
@@ -116,7 +116,7 @@ def test_a_failed_check_puts_staging_back_to_its_last_good_version(
     bad = file_with(
         sample_path,
         tmp_path,
-        "bad.tsv",
+        "bad.csv",
         {(2, "id"): "bad1", (2, "winner"): "whtie", (3, "id"): "new1"},
     )
 
@@ -129,7 +129,7 @@ def test_a_failed_check_puts_staging_back_to_its_last_good_version(
 def test_a_failed_first_run_leaves_no_staging_and_no_summary(
     con, sample_path, tmp_path, loaded_at
 ):
-    bad = file_with(sample_path, tmp_path, "bad.tsv", {(2, "winner"): "whtie"})
+    bad = file_with(sample_path, tmp_path, "bad.csv", {(2, "winner"): "whtie"})
 
     with pytest.raises(DataQualityFailure):
         run_pipeline(con, bad, loaded_at)
@@ -147,11 +147,11 @@ def test_a_failed_first_run_leaves_no_staging_and_no_summary(
 
 def test_a_clean_run_clears_the_rejected_build(con, sample_path, tmp_path, loaded_at):
     run_pipeline(con, sample_path, loaded_at)
-    bad = file_with(sample_path, tmp_path, "bad.tsv", {(2, "winner"): "whtie"})
+    bad = file_with(sample_path, tmp_path, "bad.csv", {(2, "winner"): "whtie"})
     with pytest.raises(DataQualityFailure):
         run_pipeline(con, bad, loaded_at)
 
-    fixed = file_with(sample_path, tmp_path, "bad.tsv", {(2, "winner"): "white"})
+    fixed = file_with(sample_path, tmp_path, "bad.csv", {(2, "winner"): "white"})
     run_pipeline(con, fixed, loaded_at)
 
     tables = {
@@ -169,7 +169,7 @@ def test_the_failure_names_the_value_and_how_many_rows(
     bad = file_with(
         sample_path,
         tmp_path,
-        "bad.tsv",
+        "bad.csv",
         {(2, "winner"): "whtie", (3, "winner"): "whtie"},
     )
 
@@ -184,13 +184,13 @@ def test_the_failure_names_the_value_and_how_many_rows(
 def test_a_rerun_after_the_fix_recovers(con, sample_path, tmp_path, loaded_at):
     run_pipeline(con, sample_path, loaded_at)
     bad = file_with(
-        sample_path, tmp_path, "bad.tsv", {(2, "id"): "bad1", (2, "winner"): "whtie"}
+        sample_path, tmp_path, "bad.csv", {(2, "id"): "bad1", (2, "winner"): "whtie"}
     )
     with pytest.raises(DataQualityFailure):
         run_pipeline(con, bad, loaded_at)
 
     fixed = file_with(
-        sample_path, tmp_path, "bad.tsv", {(2, "id"): "bad1", (2, "winner"): "white"}
+        sample_path, tmp_path, "bad.csv", {(2, "id"): "bad1", (2, "winner"): "white"}
     )
     summary = run_pipeline(con, fixed, loaded_at)
 
@@ -205,7 +205,7 @@ def test_a_rerun_after_the_fix_recovers(con, sample_path, tmp_path, loaded_at):
 
 
 def test_a_contract_violation_stops_everything(con, sample_path, tmp_path, loaded_at):
-    broken = tmp_path / "games.tsv"
+    broken = tmp_path / "games.csv"
     broken.write_text(sample_path.read_text().replace("winner", "result"))
 
     with pytest.raises(ContractViolation):

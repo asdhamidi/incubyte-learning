@@ -14,7 +14,7 @@ sys.path.insert(0, str(CAPSTONE / "src"))
 
 @pytest.fixture
 def sample_path():
-    return CAPSTONE / "sample_data" / "games_sample.tsv"
+    return CAPSTONE / "sample_data" / "games_sample.csv"
 
 
 @pytest.fixture

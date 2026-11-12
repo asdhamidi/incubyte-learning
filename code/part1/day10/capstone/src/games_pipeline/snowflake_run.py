@@ -69,7 +69,7 @@ def _copy_statement(stage_file):
     return f"""
         COPY INTO raw_games
         FROM @capstone_stage
-        FILE_FORMAT = (FORMAT_NAME = capstone_tsv)
+        FILE_FORMAT = (FORMAT_NAME = capstone_csv)
         MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
         INCLUDE_METADATA = (
             source_file = METADATA$FILENAME,

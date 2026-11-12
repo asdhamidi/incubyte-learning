@@ -17,7 +17,7 @@ Blob Storage -> Snowflake (raw, staging, summary) with tests and CI. Question an
 | `docs/` | Design, metric definition, data quality failure plan, cloud runbook |
 | `ci.py` | The single entry point that runs the checks |
 
-The sample file is tab-separated, like the Lichess file, and contains one duplicated game id.
+The sample file is comma-separated, like the Lichess download, and mixes its value formats (`True` and `TRUE`, whole-number and scientific-notation timestamps). It contains one duplicated game id.
 
 ## How it fits together
 DuckDB stands in for Snowflake in tests and CI, so the transformation SQL is tested on every push. The two cloud steps, the upload and the Snowflake load, run by hand: see `docs/runbook_cloud.md`. `sql/snowflake/04_checks.sql` is generated from `checks.py` (`python -m games_pipeline.checks`), and a test fails if they drift apart.

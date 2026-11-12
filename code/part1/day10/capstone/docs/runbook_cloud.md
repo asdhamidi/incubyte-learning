@@ -40,14 +40,15 @@ Create a container named `capstone` in the storage account (portal, Containers, 
 
 ```bash
 az login
-python -m games_pipeline.land sample_data/games_sample.tsv --account <storage-account> --container capstone
+python -m games_pipeline.land sample_data/games_sample.csv --account <storage-account> --container capstone
 ```
 
 Run it from `code/part1/day10/capstone/src` (or with `src` on `PYTHONPATH`). It needs the Azure CLI and a data role on the storage account, such as Storage Blob Data Contributor. To replace a file that is already there, add `--overwrite` (check `az storage blob upload --help` for your CLI version).
 
-**Screenshot:** the `capstone` container showing `games/games_sample.tsv`.
+**Screenshot:** the `capstone` container showing `games/games_sample.csv`.
 
 ## 2. Stage, format and raw table
+The file format is comma-separated (`capstone_csv`), because that is how the Lichess download comes. It reads `rated` as True, False, TRUE or FALSE and `created_at` as a whole number or scientific notation (for example `1.50421E+12`). If an earlier tab-separated format `capstone_tsv` exists in the schema, drop it: `DROP FILE FORMAT IF EXISTS capstone_tsv;`.
 Run, in order:
 1. `sql/snowflake/01_stage_and_format.sql` (finishes with `LIST @capstone_stage`)
 2. `sql/snowflake/02_raw_table.sql`
@@ -128,7 +129,7 @@ Upload the real Lichess file the same way (`--container capstone`, a different f
 
 ```sql
 SELECT source_file, COUNT(*) FROM raw_games GROUP BY 1;
-DELETE FROM raw_games WHERE source_file = 'games/games_sample.tsv';   -- the name shown in the first query
+DELETE FROM raw_games WHERE source_file = 'games/games_sample.csv';   -- use the name shown in the first query
 ```
 
 Then run `06_snapshot_staging.sql`, `sql/stg_games.sql`, `04_checks.sql` and `05_read_summary.sql` as in step 4. Check the counts line up: the raw rows, the distinct ids in raw, the rows in `stg_games` (one per distinct id), and the games counted in the summary (fewer than staging, since unrated games, draws and equal ratings are left out).

@@ -23,7 +23,7 @@ def stage(con, *games):
             **game,
         }
         con.execute(
-            "INSERT INTO stg_games VALUES (?, ?, 0, ?, ?, ?, 'mate', 'f.tsv', NULL)",
+            "INSERT INTO stg_games VALUES (?, ?, 0, ?, ?, ?, 'mate', 'f.csv', NULL)",
             [f"x{i}", g["rated"], g["white_rating"], g["black_rating"], g["winner"]],
         )
 
@@ -136,7 +136,7 @@ def test_the_summary_is_a_view_so_it_follows_staging(con):
     # a second game is added to staging, and the summary is not rebuilt
     con.execute(
         "INSERT INTO stg_games VALUES "
-        "('late', TRUE, 0, 1650, 1500, 'white', 'mate', 'f.tsv', NULL)"
+        "('late', TRUE, 0, 1650, 1500, 'white', 'mate', 'f.csv', NULL)"
     )
 
     assert read_summary(con) == [("1-99", 1, 1, 100.0), ("100-199", 1, 1, 100.0)]
@@ -150,8 +150,8 @@ def test_the_worked_example_gives_the_hand_checked_result(
 ):
     ids = {"g1000x", "g1002x", "g1003x", "g1011x", "g1023x"}
     lines = sample_path.read_text().splitlines()
-    chosen = [lines[0]] + [ln for ln in lines[1:] if ln.split("\t")[0] in ids]
-    path = tmp_path / "example.tsv"
+    chosen = [lines[0]] + [ln for ln in lines[1:] if ln.split(",")[0] in ids]
+    path = tmp_path / "example.csv"
     path.write_text("\n".join(chosen) + "\n")
     assert len(chosen) == 7  # header plus six delivered rows, one of them a duplicate
 
@@ -169,12 +169,16 @@ def reference_summary(path):
     bands = {"1-99": [0, 0], "100-199": [0, 0], "200-399": [0, 0], "400+": [0, 0]}
     seen = set()
     with path.open(newline="") as f:
-        for row in csv.DictReader(f, delimiter="\t", quoting=csv.QUOTE_NONE):
+        for row in csv.DictReader(f, delimiter=",", quoting=csv.QUOTE_NONE):
             if row["id"] in seen:
                 continue
             seen.add(row["id"])
             white, black = int(row["white_rating"]), int(row["black_rating"])
-            if row["rated"] != "True" or row["winner"] == "draw" or white == black:
+            if (
+                row["rated"].lower() != "true"
+                or row["winner"] == "draw"
+                or white == black
+            ):
                 continue
             gap = abs(white - black)
             band = (

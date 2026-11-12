@@ -322,3 +322,12 @@ def test_the_command_names_missing_settings_and_does_not_connect(capsys):
     assert code == 1
     assert connected == []
     assert "SNOWFLAKE_USER" in capsys.readouterr().err
+
+
+def test_the_load_uses_the_csv_file_format():
+    connection = FakeConnection()
+
+    run_in_snowflake(connection, "games.csv")
+
+    copy = connection.statements[position(connection, "COPY INTO raw_games")]
+    assert "FORMAT_NAME = capstone_csv" in copy
