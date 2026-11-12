@@ -11,6 +11,7 @@ Sign-in settings come from environment variables, never from arguments or files.
 """
 
 import argparse
+import logging
 import os
 import re
 import sys
@@ -18,7 +19,10 @@ import sys
 from .checks import DQ_CHECKS
 from .contract import ContractViolation, assert_contract
 from .load import SQL_DIR
+from .log import configure_logging, step
 from .pipeline import DataQualityFailure, describe_failure
+
+log = logging.getLogger(__name__)
 
 REQUIRED_SETTINGS = [
     "SNOWFLAKE_ACCOUNT",
@@ -58,7 +62,21 @@ def connect_from_env(env, connect=None):
                 "pip install -r requirements-snowflake.txt"
             ) from error
         connect = snowflake.connector.connect
-    return connect(**settings)
+    # never log the password: only where and how we sign in
+    log.info(
+        "connecting to account %s as %s (role %s, warehouse %s, %s.%s, sign-in: %s)",
+        settings["account"],
+        settings["user"],
+        settings["role"],
+        settings["warehouse"],
+        settings["database"],
+        settings["schema"],
+        settings["authenticator"],
+    )
+    if settings["authenticator"] == "externalbrowser":
+        log.info("a browser window will open to sign in")
+    with step(log, "sign in"):
+        return connect(**settings)
 
 
 def _script(*parts):
@@ -81,17 +99,30 @@ def _copy_statement(stage_file):
         ON_ERROR = ABORT_STATEMENT"""
 
 
+def _count(cursor, table, where=""):
+    cursor.execute(f"SELECT COUNT(*) FROM {table} {where}".strip())
+    row = cursor.fetchone()
+    return row[0] if row else 0
+
+
 def _load_raw(cursor, stage_file, source_file):
     """Replace this file's raw rows with a fresh load, in one transaction."""
     cursor.execute(_script("snowflake", "02_raw_table.sql"))
-    cursor.execute("BEGIN")
-    try:
-        cursor.execute(f"DELETE FROM raw_games WHERE source_file = '{source_file}'")
-        cursor.execute(_copy_statement(stage_file))
-    except Exception:
-        cursor.execute("ROLLBACK")
-        raise
-    cursor.execute("COMMIT")
+    where = f"WHERE source_file = '{source_file}'"
+    log.info("raw_games ready, %d rows from other loads", _count(cursor, "raw_games"))
+    with step(log, f"load {source_file} into raw_games"):
+        cursor.execute("BEGIN")
+        try:
+            cursor.execute(f"DELETE FROM raw_games {where}")
+            log.info("removed the rows of an earlier load of this file (if any)")
+            cursor.execute(_copy_statement(stage_file))
+            loaded = _count(cursor, "raw_games", where)
+        except Exception:
+            log.error("load failed, rolling back so raw is as it was")
+            cursor.execute("ROLLBACK")
+            raise
+        cursor.execute("COMMIT")
+    log.info("raw_games now holds %d rows from %s", loaded, source_file)
 
 
 def _staging_exists(cursor):
@@ -104,11 +135,14 @@ def _staging_exists(cursor):
 
 def _quarantine(cursor, had_staging):
     cursor.execute("CREATE OR REPLACE TABLE stg_games_rejected CLONE stg_games")
+    log.warning("rejected build kept in stg_games_rejected")
     if had_staging:
         cursor.execute("CREATE OR REPLACE TABLE stg_games CLONE stg_games_last_good")
         cursor.execute("DROP TABLE stg_games_last_good")
+        log.warning("stg_games put back to its last good version")
     else:
         cursor.execute("DROP TABLE stg_games")
+        log.warning("no earlier good version, stg_games removed")
 
 
 def run_in_snowflake(connection, stage_file, folder="games"):
@@ -128,22 +162,32 @@ def run_in_snowflake(connection, stage_file, folder="games"):
             cursor.execute(
                 "CREATE OR REPLACE TABLE stg_games_last_good CLONE stg_games"
             )
-        cursor.execute(_script("stg_games.sql"))
+            log.info("snapshot of the current staging kept as stg_games_last_good")
+        else:
+            log.info("first run: no staging yet, so no snapshot")
+        with step(log, "build stg_games"):
+            cursor.execute(_script("stg_games.sql"))
+        log.info("stg_games holds %d games after dedupe", _count(cursor, "stg_games"))
 
         for name, query in DQ_CHECKS.items():
             offenders = cursor.execute(query).fetchall()
             if offenders:
+                log.error("data quality check %s FAILED", name)
                 _quarantine(cursor, had_staging)
                 raise DataQualityFailure(describe_failure(name, offenders))
+            log.info("data quality check %s passed", name)
 
-        cursor.execute(_script("games_summary.sql"))
-        cursor.execute("DROP TABLE IF EXISTS stg_games_rejected")
-        cursor.execute("DROP TABLE IF EXISTS stg_games_last_good")
+        with step(log, "build games_summary"):
+            cursor.execute(_script("games_summary.sql"))
+            cursor.execute("DROP TABLE IF EXISTS stg_games_rejected")
+            cursor.execute("DROP TABLE IF EXISTS stg_games_last_good")
         cursor.execute(
             "SELECT gap_band, games, higher_rated_won, higher_rated_win_rate_pct "
             "FROM games_summary ORDER BY band_min_gap"
         )
-        return cursor.fetchall()
+        rows = cursor.fetchall()
+        log.info("summary has %d bands", len(rows))
+        return rows
     finally:
         cursor.close()
 
@@ -171,12 +215,17 @@ def main(argv=None, env=None, connect=None):
     parser.add_argument(
         "--local-file", help="a local copy, checked against the contract first"
     )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="also show debug logs"
+    )
     args = parser.parse_args(argv)
     env = os.environ if env is None else env
+    configure_logging(args.verbose)
 
     try:
         if args.local_file:
-            assert_contract(args.local_file)
+            with step(log, f"check {args.local_file} against the contract"):
+                assert_contract(args.local_file)
         connection = connect_from_env(env, connect)
     except (ContractViolation, ValueError) as error:
         print(error, file=sys.stderr)
@@ -187,9 +236,14 @@ def main(argv=None, env=None, connect=None):
     except (DataQualityFailure, ValueError) as error:
         print(error, file=sys.stderr)
         return 1
+    except Exception:
+        log.exception("the run stopped on an unexpected error")
+        return 1
     finally:
         connection.close()
+        log.info("connection closed")
 
+    log.info("run finished")
     _print_summary(rows)
     return 0
 

@@ -6,8 +6,11 @@ not meaning: whether `winner` holds an accepted value is a data quality check.
 """
 
 import csv
+import logging
 import math
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 # The Lichess download is a plain comma-separated file. Its formats are mixed: `rated` is
 # True, False, TRUE or FALSE, and `created_at` is a whole number or scientific notation
@@ -50,7 +53,7 @@ def _check_value(column, kind, value):
         return f"{column} {value!r} is not True or False"
     if kind == "integer":
         try:
-            print(int(value))
+            int(value)
         except ValueError:
             return f"{column} {value!r} is not an integer"
     if kind == "number" and not _is_number(value):
@@ -85,6 +88,12 @@ def validate_file(path):
             problem = _check_value(column, kind, row[column])
             if problem:
                 problems.append(f"line {line_number}: {problem}")
+    log.debug(
+        "%s: %d data rows checked, %d problems",
+        Path(path).name,
+        len(rows) - 1,
+        len(problems),
+    )
     return problems
 
 
@@ -92,6 +101,9 @@ def assert_contract(path):
     """The runtime gate: raise before anything is loaded if the file breaks the contract."""
     problems = validate_file(path)
     if problems:
+        log.error(
+            "%s breaks the contract with %d problems", Path(path).name, len(problems)
+        )
         raise ContractViolation(
             f"{Path(path).name} breaks the contract:\n- " + "\n- ".join(problems)
         )

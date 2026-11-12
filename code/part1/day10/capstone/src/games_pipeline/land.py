@@ -8,11 +8,15 @@ signed in with `az login`.
 """
 
 import argparse
+import logging
 import shutil
 import subprocess
 from pathlib import Path
 
 from .contract import assert_contract
+from .log import configure_logging, step
+
+log = logging.getLogger(__name__)
 
 
 def blob_name(path, folder="games"):
@@ -43,10 +47,12 @@ def build_upload_command(path, account, container, folder="games", overwrite=Fal
 
 def land(path, account, container, folder="games", overwrite=False, run=subprocess.run):
     """Check the contract, then upload. Returns the blob name."""
-    assert_contract(path)
+    with step(log, f"check {path} against the contract"):
+        assert_contract(path)
     command = build_upload_command(path, account, container, folder, overwrite)
     command[0] = shutil.which("az") or "az"
-    run(command, check=True)
+    with step(log, f"upload to {account}/{container}/{blob_name(path, folder)}"):
+        run(command, check=True)
     return blob_name(path, folder)
 
 
@@ -57,7 +63,9 @@ def main(argv=None):
     parser.add_argument("--container", required=True)
     parser.add_argument("--folder", default="games")
     parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
+    configure_logging(args.verbose)
     blob = land(args.file, args.account, args.container, args.folder, args.overwrite)
     print(f"uploaded {blob}")
 
