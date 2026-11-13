@@ -89,9 +89,9 @@ The summary is a view over staging, so it would now count the bad row's game out
 **Screenshots:** the check returning the bad row, and the summary unchanged after the quarantine.
 
 ## One command for the Snowflake steps
-Steps 3 and 4 can be run as one command instead of worksheet by worksheet. It does what `run_pipeline` does locally, against Snowflake.
+Steps 1, 3 and 4 can be run as one command instead of worksheet by worksheet: it uploads the file to Blob Storage, then does what `run_pipeline` does locally, against Snowflake.
 
-Needs: steps 0 to 2 done once (the container, the integration, the stage and the file format), and the file already in Blob Storage under the stage's folder.
+Needs: step 0 done once (the container and the storage integration, which needs an account admin) and `az login` for the upload. The file format and the stage are created by the command itself, so step 2 is only needed when you run the worksheets by hand.
 
 Install the connector and set the sign-in settings in your own shell. Nothing here goes in the repo or in a chat. In PowerShell:
 
@@ -105,20 +105,25 @@ $env:SNOWFLAKE_DATABASE = "INCUBYTE_LEARNING"
 $env:SNOWFLAKE_SCHEMA = "AZURE_LEARNING"
 ```
 
-The account is the part of your Snowsight address before `.snowflakecomputing.com`. Sign-in opens a browser window (SSO). To use a password instead, set `SNOWFLAKE_AUTHENTICATOR` to `snowflake` and `SNOWFLAKE_PASSWORD`.
+The account is the part of your Snowsight address before `.snowflakecomputing.com`. Sign-in defaults to a browser window (SSO), which needs an identity provider on the Snowflake account. Without one, set `SNOWFLAKE_AUTHENTICATOR` to `snowflake` and type the password into `SNOWFLAKE_PASSWORD` yourself: `$env:SNOWFLAKE_PASSWORD = Read-Host "Snowflake password"`.
 
-Run it from `src/`. The first argument is the file's name in the stage, and `--local-file` is an optional local copy that is checked against the contract before anything is touched:
+Run it from `src/`:
 
 ```powershell
-python -m games_pipeline.snowflake_run games.csv --local-file C:\path\to\games.csv
+az login
+python -m games_pipeline.snowflake_run --local-file C:\path\to\games.csv --storage-account <storage-account>
 ```
 
+`--container` defaults to `capstone` and `--folder` to `games`. The storage account can also come from `AZURE_STORAGE_ACCOUNT`. A file of the same name already in Blob Storage is replaced. Without a storage account nothing is uploaded: give the file's name in the stage as the first argument instead (`snowflake_run games.csv`), and the file must already be in Blob Storage. Add `-v` for debug logs.
+
 In order, it:
-1. checks the local copy against the contract (if given), before connecting
-2. replaces that file's rows in `raw_games` and loads it again, in one transaction that rolls back if the load fails
-3. keeps the last good staging, then rebuilds `stg_games`
-4. runs the data quality check. If it finds rows, staging is put back to the last good version, the rejected build is kept in `stg_games_rejected`, the reason is printed and the command exits with an error
-5. otherwise builds the `games_summary` view, clears the temporary tables and prints the summary and the overall rate, worked out from the counts
+1. checks the local copy against the contract, before anything leaves your machine
+2. uploads it to Blob Storage, if a storage account is given. A failed upload stops the run before it connects
+3. connects to Snowflake and creates the `capstone_csv` file format and the `capstone_stage` stage (pointing at the Blob folder it just uploaded to), replacing any earlier ones
+4. replaces that file's rows in `raw_games` and loads it again, in one transaction that rolls back if the load fails
+5. keeps the last good staging, then rebuilds `stg_games`
+6. runs the data quality check. If it finds rows, staging is put back to the last good version, the rejected build is kept in `stg_games_rejected`, the reason is printed and the command exits with an error
+7. otherwise builds the `games_summary` view and the three upset views (`upset_by_opening`, `upset_by_ending`, `upset_by_length`, over `decided_games`), clears the temporary tables and prints the summary with its overall rate, worked out from the counts, followed by the upset tables. Run by hand, the upset views come from `sql/decided_games.sql` and the three `sql/upset_by_*.sql` files, in that order, after `games_summary.sql`
 
 Other files already in `raw_games` stay there, and staging reads all of raw. The sample file's rows would still be counted, so remove them once before reading the real answer (see "Loading the real file").
 

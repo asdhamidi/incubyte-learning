@@ -14,6 +14,30 @@ log = logging.getLogger(__name__)
 
 SQL_DIR = Path(__file__).resolve().parents[2] / "sql"
 
+# The upset views, in the order they are built: each one reads decided_games.
+UPSET_VIEW_FILES = [
+    "decided_games.sql",
+    "upset_by_opening.sql",
+    "upset_by_ending.sql",
+    "upset_by_length.sql",
+]
+
+# How each upset view is read: (name, query). Rows are (label, games, lower_rated_won, rate).
+UPSET_QUERIES = {
+    "opening": (
+        "SELECT opening_family, games, lower_rated_won, upset_rate_pct "
+        "FROM upset_by_opening ORDER BY games DESC, opening_family"
+    ),
+    "ending": (
+        "SELECT victory_status, games, lower_rated_won, upset_rate_pct "
+        "FROM upset_by_ending ORDER BY games DESC, victory_status"
+    ),
+    "length": (
+        "SELECT game_length, games, lower_rated_won, upset_rate_pct "
+        "FROM upset_by_length ORDER BY length_order"
+    ),
+}
+
 # every column of the file, loaded as text
 FILE_COLUMNS = [
     "id",
@@ -86,6 +110,19 @@ def build_staging(con):
 
 def build_summary(con):
     run_sql_file(con, "games_summary.sql")
+
+
+def build_upset_views(con):
+    """The views of how often the lower-rated player wins, by opening, ending and length."""
+    for name in UPSET_VIEW_FILES:
+        run_sql_file(con, name)
+
+
+def read_upsets(con):
+    """Each upset view as rows of (label, games, lower_rated_won, rate_pct), keyed by view."""
+    return {
+        name: con.execute(query).fetchall() for name, query in UPSET_QUERIES.items()
+    }
 
 
 def read_summary(con):

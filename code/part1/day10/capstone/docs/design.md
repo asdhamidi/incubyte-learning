@@ -13,6 +13,8 @@ Lichess games file (CSV)
    -> RAW_GAMES                   exact copy of the file plus file name and load time
    -> STG_GAMES                   one row per game, typed and cleaned
    -> GAMES_SUMMARY (view)        higher-rated win rate by rating-gap band
+   -> UPSET_BY_OPENING, UPSET_BY_ENDING, UPSET_BY_LENGTH (views)
+                                  how often the lower-rated player wins, over DECIDED_GAMES
 ```
 
 Tests and CI run the same transformation SQL on DuckDB, which stands in for Snowflake. Only the load step differs (`COPY INTO` in Snowflake, `read_csv` in DuckDB). The upload to Blob Storage and the Snowflake load are run by hand against the real accounts.
