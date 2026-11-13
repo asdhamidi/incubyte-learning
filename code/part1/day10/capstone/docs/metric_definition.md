@@ -35,7 +35,19 @@ Expected result for these six rows:
 
 Across all counted games, 1 of 3 was won by the higher-rated player (33.3%).
 
+## Upset views: when does the lower-rated player win?
+A follow-up to the main question. The same games are counted (`decided_games`: rated, decisive, two different ratings), and the rate is the share won by the lower-rated player, so it is 100% minus the higher-rated win rate for the same games. Each view shows the counts next to the rate, and each counts exactly the games `games_summary` counts.
+
+| View | One row per | Rule |
+|---|---|---|
+| `upset_by_opening` | Opening family | The family is the opening name before the first colon, so every Sicilian Defense variation counts as the Sicilian Defense. A missing name is `unknown` |
+| `upset_by_ending` | How the game ended | `victory_status`: mate, resign or out of time. A missing value is `unknown` |
+| `upset_by_length` | Game length | `turns` (moves by both players) in four buckets: 1-30, 31-60, 61-90, 91+. A missing or unreadable value is `unknown` |
+
+Caveats: openings with few games give noisy rates, so read the count first. An upset rate by opening or length shows an association, not a cause: for example, long games are more often upsets, but that does not mean a long game makes an upset likelier.
+
 ## Change log
 | Date       | Change        | Why                |
 | ---------- | ------------- | ------------------ |
 | 2026-11-10 | First version | Capstone question  |
+| 2026-11-13 | Added the three upset views | Follow-up: when does the lower-rated player win? |

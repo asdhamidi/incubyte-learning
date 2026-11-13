@@ -11,6 +11,8 @@ SELECT
     CAST(black_rating AS INTEGER) AS black_rating,
     winner,
     victory_status,
+    TRY_CAST(turns AS INTEGER)    AS turns,  -- a bad value becomes missing, not an error
+    opening_name,
     source_file,
     loaded_at
 FROM raw_games

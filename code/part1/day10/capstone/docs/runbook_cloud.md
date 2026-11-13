@@ -123,7 +123,7 @@ In order, it:
 4. replaces that file's rows in `raw_games` and loads it again, in one transaction that rolls back if the load fails
 5. keeps the last good staging, then rebuilds `stg_games`
 6. runs the data quality check. If it finds rows, staging is put back to the last good version, the rejected build is kept in `stg_games_rejected`, the reason is printed and the command exits with an error
-7. otherwise builds the `games_summary` view, clears the temporary tables and prints the summary and the overall rate, worked out from the counts
+7. otherwise builds the `games_summary` view and the three upset views (`upset_by_opening`, `upset_by_ending`, `upset_by_length`, over `decided_games`), clears the temporary tables and prints the summary with its overall rate, worked out from the counts, followed by the upset tables. Run by hand, the upset views come from `sql/decided_games.sql` and the three `sql/upset_by_*.sql` files, in that order, after `games_summary.sql`
 
 Other files already in `raw_games` stay there, and staging reads all of raw. The sample file's rows would still be counted, so remove them once before reading the real answer (see "Loading the real file").
 

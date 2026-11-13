@@ -19,14 +19,16 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from .checks import DQ_CHECKS
 from .contract import ContractViolation, assert_contract
 from .land import land
-from .load import SQL_DIR
+from .load import SQL_DIR, UPSET_QUERIES, UPSET_VIEW_FILES
 from .log import configure_logging, step
 from .pipeline import DataQualityFailure, describe_failure
+from .report import format_summary, format_upsets
 
 log = logging.getLogger(__name__)
 
@@ -225,6 +227,8 @@ def run_in_snowflake(connection, stage_file, folder="games", stage_url=None):
 
         with step(log, "build games_summary"):
             cursor.execute(_script("games_summary.sql"))
+            for name in UPSET_VIEW_FILES:
+                cursor.execute(_script(name))
             cursor.execute("DROP TABLE IF EXISTS stg_games_rejected")
             cursor.execute("DROP TABLE IF EXISTS stg_games_last_good")
         cursor.execute(
@@ -238,14 +242,16 @@ def run_in_snowflake(connection, stage_file, folder="games", stage_url=None):
         cursor.close()
 
 
-def _print_summary(rows):
-    print("gap band    games  higher won    rate")
-    for band, games, won, rate in rows:
-        print(f"{band:<9} {games:>7} {won:>11} {rate:>7}%")
-    games = sum(row[1] for row in rows)
-    won = sum(row[2] for row in rows)
-    rate = 100.0 * won / games if games else 0.0
-    print(f"overall: {games} games, {won} won by the higher-rated player ({rate:.1f}%)")
+def read_upsets(connection):
+    """Each upset view as rows of (label, games, lower_rated_won, rate_pct), keyed by view."""
+    cursor = connection.cursor()
+    try:
+        return {
+            name: cursor.execute(query).fetchall()
+            for name, query in UPSET_QUERIES.items()
+        }
+    finally:
+        cursor.close()
 
 
 def main(argv=None, env=None, connect=None, upload=land):
@@ -277,6 +283,7 @@ def main(argv=None, env=None, connect=None, upload=land):
     args = parser.parse_args(argv)
     env = os.environ if env is None else env
     configure_logging(args.verbose)
+    started = time.perf_counter()
 
     stage_file = args.stage_file or (args.local_file and Path(args.local_file).name)
     if not stage_file:
@@ -318,6 +325,7 @@ def main(argv=None, env=None, connect=None, upload=land):
             stage_url_for(account, args.container, args.folder) if account else None
         )
         rows = run_in_snowflake(connection, stage_file, args.folder, stage_url)
+        upsets = read_upsets(connection)
     except (DataQualityFailure, ValueError) as error:
         print(error, file=sys.stderr)
         return 1
@@ -328,8 +336,11 @@ def main(argv=None, env=None, connect=None, upload=land):
         connection.close()
         log.info("connection closed")
 
-    log.info("run finished")
-    _print_summary(rows)
+    log.info("run finished in %.1fs", time.perf_counter() - started)
+    print()
+    print(format_summary(rows))
+    print()
+    print(format_upsets(upsets))
     return 0
 
 

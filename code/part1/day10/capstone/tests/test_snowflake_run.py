@@ -2,7 +2,12 @@ import subprocess
 
 import pytest
 from games_pipeline.pipeline import DataQualityFailure
-from games_pipeline.snowflake_run import connect_from_env, main, run_in_snowflake
+from games_pipeline.snowflake_run import (
+    connect_from_env,
+    main,
+    read_upsets,
+    run_in_snowflake,
+)
 
 # The runner is tested against a fake connection that records the SQL it is given, so no
 # Snowflake account is needed. What the SQL does in Snowflake is checked by running it
@@ -65,6 +70,12 @@ class FakeConnection:
             return SUMMARY
         if statement.startswith("SELECT COUNT(*) FROM"):
             return [(7,)]
+        if "FROM upset_by_opening" in statement:
+            return [("Sicilian Defense", 10, 3, 30.0)]
+        if "FROM upset_by_ending" in statement:
+            return [("resign", 8, 2, 25.0), ("mate", 2, 1, 50.0)]
+        if "FROM upset_by_length" in statement:
+            return [("1-30", 4, 1, 25.0)]
         return []
 
 
@@ -348,9 +359,9 @@ def test_a_clean_run_logs_each_step_in_order(caplog):
         "load games/games.csv into raw_games",
         "raw_games now holds 7 rows",
         "first run: no staging yet",
-        "build stg_games done",
+        "build stg_games  ",
         "data quality check winner_accepted_values passed",
-        "build games_summary done",
+        "build games_summary  ",
         "summary has 2 bands",
     ]
     positions = [text.index(s) for s in steps]
@@ -577,3 +588,54 @@ def test_the_setup_is_logged(caplog):
 
     assert "file format capstone_csv ready" in caplog.text
     assert "stage capstone_stage points at" in caplog.text
+
+
+# --- the upset views --------------------------------------------------------
+
+UPSET_VIEWS = [
+    "CREATE OR REPLACE VIEW decided_games",
+    "CREATE OR REPLACE VIEW upset_by_opening",
+    "CREATE OR REPLACE VIEW upset_by_ending",
+    "CREATE OR REPLACE VIEW upset_by_length",
+]
+
+
+def test_the_run_builds_the_upset_views_after_the_summary_in_order():
+    connection = FakeConnection()
+
+    run_in_snowflake(connection, "games.csv")
+
+    positions = [
+        position(connection, "CREATE OR REPLACE VIEW games_summary"),
+        *[position(connection, view) for view in UPSET_VIEWS],
+    ]
+    assert positions == sorted(positions)
+
+
+def test_a_failed_check_builds_no_upset_views():
+    connection = FakeConnection(offenders=[("whtie", 2)])
+
+    with pytest.raises(DataQualityFailure):
+        run_in_snowflake(connection, "games.csv")
+
+    assert not any(ran(connection, view) for view in UPSET_VIEWS)
+
+
+def test_the_upset_views_can_be_read_back():
+    connection = FakeConnection()
+
+    upsets = read_upsets(connection)
+
+    assert upsets["opening"] == [("Sicilian Defense", 10, 3, 30.0)]
+    assert [row[0] for row in upsets["ending"]] == ["resign", "mate"]
+    assert upsets["length"] == [("1-30", 4, 1, 25.0)]
+
+
+def test_the_command_prints_the_upset_tables(capsys):
+    main(["games.csv"], env=ENV, connect=lambda **kwargs: FakeConnection())
+
+    output = capsys.readouterr().out
+    assert "lower-rated player wins" in output
+    assert "Sicilian Defense" in output
+    assert "resign" in output
+    assert "1-30" in output

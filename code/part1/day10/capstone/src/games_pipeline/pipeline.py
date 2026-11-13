@@ -7,9 +7,16 @@ the cause can be investigated. Raw keeps the new data too.
 """
 
 import logging
+from pathlib import Path
 
 from .checks import DQ_CHECKS, run_dq_check
-from .load import build_staging, build_summary, load_raw, read_summary
+from .load import (
+    build_staging,
+    build_summary,
+    build_upset_views,
+    load_raw,
+    read_summary,
+)
 from .log import step
 
 log = logging.getLogger(__name__)
@@ -51,7 +58,7 @@ def _quarantine(con, had_staging):
 
 
 def run_pipeline(con, path, loaded_at):
-    with step(log, f"load {path} into raw_games"):
+    with step(log, f"load {Path(path).name} into raw_games"):
         load_raw(con, path, loaded_at)  # raises ContractViolation before anything loads
 
     had_staging = _table_exists(con, "stg_games")
@@ -76,6 +83,7 @@ def run_pipeline(con, path, loaded_at):
 
     with step(log, "build games_summary"):
         build_summary(con)  # a view, so it follows the staging that just passed
+        build_upset_views(con)
     con.execute("DROP TABLE IF EXISTS stg_games_rejected")
     con.execute("DROP TABLE IF EXISTS stg_games_last_good")
     return read_summary(con)
