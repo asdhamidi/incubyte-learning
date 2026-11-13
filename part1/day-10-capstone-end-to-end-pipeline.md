@@ -4,7 +4,7 @@
 ## Success criteria
 | Criterion (copied from the planner)                            | Done? | Evidence (link or section below)                                                                                                                                                                                                            |
 | -------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Builds an end-to-end pipeline from Blob Storage to Snowflake   | Yes   | [Architecture](#architecture), [Cloud run](#cloud-run), [runbook](../code/part1/day10/capstone/docs/runbook_cloud.md); the sample file was landed, loaded, checked and summarised in Snowflake                                              |
+| Builds an end-to-end pipeline from Blob Storage to Snowflake   | Yes   | [Architecture](#architecture), [Cloud run](#cloud-run), [One command](#one-command-from-local-file-to-summary), [runbook](../code/part1/day10/capstone/docs/runbook_cloud.md)                                              |
 | Tests the pipeline and runs tests in CI through a pull request | Yes   | [How it was built](#how-it-was-built-test-first), [Tests and CI](#tests-and-ci), [pull request #4](https://github.com/asdhamidi/incubyte-learning/pull/4) merged with a green check, [screenshot](../assets/day10/pr_checks_green.png)      |
 | Adds a data quality check with a failure plan                  | Yes   | [Data quality check](#data-quality-check-and-failure-plan), [failure plan](../code/part1/day10/capstone/docs/dq_failure_plan.md), [tests](../code/part1/day10/capstone/tests/test_dq.py)                                                    |
 | Answers a stakeholder question with a clear metric definition  | Yes   | [The question and the metric](#the-question-and-the-metric), [metric definition](../code/part1/day10/capstone/docs/metric_definition.md), [The stakeholder answer](#the-stakeholder-answer), [screenshot](../assets/day10/summary_real.png) |
@@ -18,6 +18,7 @@
 ## AI use
 - Built the capstone's scaffolding with Claude Code
 - The cloud steps (the upload and the Snowflake load) were run by me in my own accounts.
+- Also built the one-command runner, the log and the upset views with Claude Code, test-first.
 ## Open questions
 NA
 ## Changes after review
@@ -30,19 +31,21 @@ NA
 **Do higher-rated players actually win more games, and how does that change as the rating gap grows?** It is the kind of question a ratings or matchmaking owner asks, and it needs a precise definition before any SQL.
 
 The metric is `higher_rated_win_rate_by_gap_band`, the share of decided rated games won by the higher-rated player, split into four bands of rating gap (1-99, 100-199, 200-399, 400+). Full definition: [metric_definition.md](../code/part1/day10/capstone/docs/metric_definition.md).
-- Rated games only. Draws are left out, and so are games where both ratings are equal. A game delivered twice counts once.
+- Rated games only. Draws and games with equal ratings are left out. A game delivered twice counts once.
 - The game count sits next to every rate, since small bands are noisy.
-- The definition has a worked example of six rows checked by hand, and a test runs the same six rows through the whole pipeline and gets the same result.
-- The sample file is synthetic, so its rates mean nothing. Only the real Lichess file can answer the question.
+- A worked example of six rows, checked by hand, runs through the whole pipeline in a test and gives the same result.
+- The sample file is synthetic, so only the real file can answer the question.
 
 ### Architecture
 ```text
-Lichess games file (TSV)
+Lichess games file (CSV)
    -> Azure Blob Storage          container `capstone`, folder `games/`
    -> Snowflake external stage    storage integration, COPY INTO
    -> RAW_GAMES                   the file as delivered, plus file name, line and load time
    -> STG_GAMES                   one row per game, typed
    -> GAMES_SUMMARY (view)        higher-rated win rate by rating-gap band
+   -> UPSET_BY_OPENING, UPSET_BY_ENDING, UPSET_BY_LENGTH (views)
+                                  how often the lower-rated player wins
 ```
 
 | Layer | Holds | Rules |
@@ -50,6 +53,8 @@ Lichess games file (TSV)
 | Raw | The file as delivered, all text | No logic. Never edited |
 | Staging | One row per game, with real types | Dedupe, casts and renames only |
 | Summary | A view with one row per rating-gap band | The metric rules live here and only here |
+| Upset views | Three views by opening, ending and length | Same rules as the summary, so they count the same games |
+- The data is the Kaggle "Chess Game Dataset (Lichess)" (`games.csv`, 20,058 games).
 - Design notes: [design.md](../code/part1/day10/capstone/docs/design.md).
 
 ### How it was built, test-first
@@ -63,9 +68,9 @@ Each step started with tests that failed, then the code that made them pass, the
 | Summary | The metric, with boundary tests on every band edge, and a cross-check against the metric worked out in plain Python | 22 |
 | Data quality check | The `winner` check, and the pipeline that puts staging back to its last good version when it fails | 14 |
 | Cloud steps | Upload that checks the contract first, and guards that keep the Snowflake scripts in line with the tested code | 14 |
+| Runner | One command for the cloud steps, tested against a fake Snowflake connection | 57 |
+| Upset views | Three views of when the lower-rated player wins, checked against the summary | 37 |
 
-- 92 tests in the capstone, and 154 across the repo in CI.
-- Mutation checks, done by breaking the code on purpose: removing the dedupe failed 6 tests, including the draws in the metric failed 4, skipping the contract gate failed 2, and skipping the rollback of staging failed 2 tests. One test of mine was too weak at first, and a mutation check showed it.
 
 ### Tests and CI
 | Test | What it protects | When |
@@ -75,19 +80,19 @@ Each step started with tests that failed, then the code that made them pass, the
 | Data | Not null, unique, positive ratings, row counts match raw | After staging |
 | Data quality check | `winner` is one of white, black, draw | Every load |
 
-- `python ci.py` runs four stages in order: no data files committed, format, lint, tests. GitHub Actions runs the same command on every push.
+- `python ci.py` runs four stages in order: no data files committed, format, lint, tests. GitHub Actions runs it on every push.
 - Work went on the branch `capstone-pipeline` in six small commits, one per step, so each can be reverted on its own.
-- I ran CI on a clean checkout of the branch before pushing, so nothing the branch needs is untracked or ignored.
-- The branch went in as [pull request #4](https://github.com/asdhamidi/incubyte-learning/pull/4) with its six commits. The `CI / test` check passed on the branch and again on `main` after the merge.
+- I ran CI on a clean checkout before pushing, so nothing the branch needs is untracked.
+- It went in as [pull request #4](https://github.com/asdhamidi/incubyte-learning/pull/4). The `CI / test` check passed on the branch and again on `main` after the merge.
 
 ![Pull request 4 merged, with its checks passed](../assets/day10/pr_checks_green.png)
 
 *Pull request #4 with six commits, merged after the checks passed.*
 
 ### Data quality check and failure plan
-The check is `winner_accepted_values`. In staging, `winner` must be `white`, `black` or `draw`, and never NULL. It matters because the summary only counts `white` and `black`, so a new spelling would drop games out of the metric without any error. This is the same silent failure as the `complete` status on Day 6. The check blocks the summary.
+The check is `winner_accepted_values`: in staging, `winner` must be `white`, `black` or `draw`, never NULL. The summary only counts `white` and `black`, so a new spelling would drop games out of the metric without any error, the same silent failure as the `complete` status on Day 6. A failure blocks the summary.
 
-Tests cover an unknown value, a different case, NULL, an empty string, the summary staying unchanged after a failure, staging being put back to its last good version, the rejected build being kept, and a rerun with a fixed file recovering. Full plan: [dq_failure_plan.md](../code/part1/day10/capstone/docs/dq_failure_plan.md).
+Tests cover an unknown value, a different case, NULL, an empty string, the summary staying unchanged, staging being put back, the rejected build being kept, and a rerun with a fixed file recovering. Full plan: [dq_failure_plan.md](../code/part1/day10/capstone/docs/dq_failure_plan.md).
 
 ![The winner check returning no rows in Snowflake](../assets/day10/checks_empty.png)
 
@@ -108,30 +113,79 @@ The sample file was landed in Blob Storage, staged in Snowflake and loaded into 
 
 *The load: 40 raw rows and 39 distinct games, as expected (one game is delivered twice).*
 
+The sample was tab-separated then. It is a CSV now, like the real file.
+
 ![The summary in Snowflake for the sample file](../assets/day10/summary_sample.png)
 
 *The summary for the sample file in Snowflake: 25 games in four bands (25.0, 50.0, 25.0 and 18.2), the same numbers as the local run.*
 
+### One command from local file to summary
+The cloud steps above were run by hand. They are now one command from the local file to the summary:
+
+```text
+python -m games_pipeline.snowflake_run --local-file games.csv --storage-account <storage-account>
+```
+
+In order, it:
+1. checks the file against the contract
+2. uploads it to Blob Storage
+3. creates the Snowflake file format and the stage
+4. loads it into `raw_games` in one transaction, which rolls back on an error
+5. keeps the last good staging and rebuilds `stg_games`
+6. runs the data quality check, and on a failure puts staging back and stops
+7. builds the summary and the upset views, and prints them
+
+- The storage integration is set up once by an admin and is not part of the command.
+- Sign-in settings come from my own environment variables, never from the repo. My account has no browser sign-in, so it uses a password typed into my own terminal, and it is never logged.
+- Progress prints as short lines: `>` a step started, `+` done with its time, `!` a warning, `x` an error.
+- It is tested against a fake Snowflake connection, so CI needs no account.
+- The real file broke my first contract. I had assumed tabs, `True` and `False`, and whole-number timestamps. It has commas, `TRUE` and `FALSE`, and values like `1.50421E+12`. The contract caught it before anything loaded, and I made the pipeline accept the file as it comes instead of converting it.
+
 ### The stakeholder answer
-The real Lichess file (`games/games.csv`, 20,058 rows) was loaded into `raw_games`, staged and summarised in Snowflake with the same SQL the tests run.
-
-![The summary in Snowflake for the real file](../assets/day10/summary_real.png)
-
-*The summary for the real file: 14,728 decided rated games in four rating-gap bands.*
+The real file (`games/games.csv`, 20,058 rows) was loaded, staged and summarised in Snowflake with the same SQL the tests run. The local DuckDB run gives the same numbers on every row.
 
 | Rating gap | Games | Won by the higher-rated player | Rate |
 |---|---|---|---|
-| 1-99 | 7,053 | 3,853 | 54.6% |
-| 100-199 | 3,489 | 2,288 | 65.6% |
-| 200-399 | 2,940 | 2,317 | 78.8% |
-| 400+ | 1,246 | 1,102 | 88.4% |
-| All | 14,728 | 9,560 | 64.9% |
+| 1-99 | 7,049 | 3,852 | 54.6% |
+| 100-199 | 3,487 | 2,287 | 65.6% |
+| 200-399 | 2,932 | 2,315 | 79.0% |
+| 400+ | 1,235 | 1,100 | 89.1% |
+| All | 14,703 | 9,554 | 65.0% |
 
 The answer, in three sentences:
 
-> Yes: the higher-rated player wins about 65% of decisive rated games (64.9% of 14,728), and the advantage grows with the gap, from 54.6% when the ratings are within 99 points to 88.4% when they are 400 or more apart. Each band holds over a thousand games and the rate rises steadily across all four, so the pattern is not noise. This counts only rated games with a decisive result (draws, unrated games and games between equal ratings are left out), and it shows that ratings predict results, not why, and the wide bands hide differences inside each band.
+> Yes: the higher-rated player wins about 65% of decisive rated games (65.0% of 14,703), and the advantage grows with the gap, from 54.6% when the ratings are within 99 points to 89.1% when they are 400 or more apart. Each band holds over a thousand games and the rate rises steadily across all four, so the pattern is not noise. This counts only rated games with a decisive result (draws, unrated games and games between equal ratings are left out), and it shows that ratings predict results, not why, and the wide bands hide differences inside each band.
 
-The overall rate is worked out from the counts (9,560 of 14,728), not by averaging the four rates.
+The overall rate is worked out from the counts (9,554 of 14,703), not by averaging the four rates.
+
+![The summary in Snowflake for the real file](../assets/day10/summary_real.png)
+
+*The summary for the real file in Snowflake: 14,703 decided rated games in four bands.*
+
+### When does the lower-rated player win?
+A follow-up. Three views over the same decided games show how often the lower-rated player wins, by opening, by how the game ended and by game length. Each counts exactly the games the summary counts, and a test checks it. Overall, the lower-rated player wins 35.0% of the 14,703 games.
+
+| How the game ended | Games | Won by the lower-rated player | Rate |
+|---|---|---|---|
+| Resign | 8,593 | 3,000 | 34.9% |
+| Mate | 4,851 | 1,658 | 34.2% |
+| Out of time | 1,259 | 491 | 39.0% |
+
+| Game length (moves by both players) | Games | Won by the lower-rated player | Rate |
+|---|---|---|---|
+| 1-30 | 2,405 | 718 | 29.9% |
+| 31-60 | 5,899 | 2,074 | 35.2% |
+| 61-90 | 3,964 | 1,394 | 35.2% |
+| 91+ | 2,435 | 963 | 39.5% |
+
+![The three upset views in Snowflake](../assets/day10/upsets_real.png)
+
+*The three upset views in Snowflake: how the game ended, game length and the ten most played openings.*
+
+- **Opening:** it barely matters. The ten most played all sit between 34% and 37%.
+- **Ending:** upsets are most common when the game ends on time, when a lower-rated player can win a lost position on the clock.
+- **Length:** upsets get more common as games get longer.
+- These are associations, not causes, and small openings are noisy, so read the count before the rate. Rules: [metric_definition.md](../code/part1/day10/capstone/docs/metric_definition.md).
 
 ---
 ## Reflection on the two weeks
