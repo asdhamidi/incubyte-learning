@@ -1,3 +1,5 @@
+import subprocess
+
 import pytest
 from games_pipeline.pipeline import DataQualityFailure
 from games_pipeline.snowflake_run import connect_from_env, main, run_in_snowflake
@@ -373,3 +375,205 @@ def test_the_password_is_never_logged(caplog):
     connect_from_env(env, connect=lambda **settings: FakeConnection())
     assert "s3cret-value" not in caplog.text
     assert "org-account" in caplog.text
+
+
+# --- uploading to Blob Storage first ----------------------------------------
+
+
+class FakeUpload:
+    """Stands in for `land`: records what it was asked to upload."""
+
+    def __init__(self, fail=False):
+        self.calls = []
+        self.fail = fail
+
+    def __call__(self, path, account, container, folder="games", overwrite=False):
+        self.calls.append((str(path), account, container, folder, overwrite))
+        if self.fail:
+            raise subprocess.CalledProcessError(1, "az", stderr="the upload failed")
+        return f"{folder}/{path.name if hasattr(path, 'name') else path}"
+
+
+def test_the_command_uploads_the_local_file_before_it_connects(sample_path):
+    order = []
+    upload = FakeUpload()
+
+    def tracked_upload(*args, **kwargs):
+        order.append("upload")
+        return upload(*args, **kwargs)
+
+    def connect(**kwargs):
+        order.append("connect")
+        return FakeConnection()
+
+    code = main(
+        ["--local-file", str(sample_path), "--storage-account", "stacct"],
+        env=ENV,
+        connect=connect,
+        upload=tracked_upload,
+    )
+
+    assert code == 0
+    assert order == ["upload", "connect"]
+    # the folder and container default to the ones the stage reads, and a re-run replaces the blob
+    assert upload.calls == [(str(sample_path), "stacct", "capstone", "games", True)]
+
+
+def test_the_file_name_in_the_stage_defaults_to_the_local_files_name(sample_path):
+    connection = FakeConnection()
+
+    main(
+        ["--local-file", str(sample_path), "--storage-account", "stacct"],
+        env=ENV,
+        connect=lambda **kwargs: connection,
+        upload=FakeUpload(),
+    )
+
+    copy = connection.statements[position(connection, "COPY INTO raw_games")]
+    assert f"FILES = ('{sample_path.name}')" in copy
+
+
+def test_a_bad_local_file_is_never_uploaded(sample_path, tmp_path, capsys):
+    bad = tmp_path / "games.csv"
+    bad.write_text(sample_path.read_text().replace("winner", "result"))
+    upload = FakeUpload()
+
+    code = main(
+        ["--local-file", str(bad), "--storage-account", "stacct"],
+        env=ENV,
+        connect=lambda **kwargs: FakeConnection(),
+        upload=upload,
+    )
+
+    assert code == 1
+    assert upload.calls == []
+
+
+def test_a_failed_upload_stops_the_run_before_connecting(sample_path, capsys):
+    connected = []
+
+    code = main(
+        ["--local-file", str(sample_path), "--storage-account", "stacct"],
+        env=ENV,
+        connect=lambda **kwargs: connected.append(kwargs),
+        upload=FakeUpload(fail=True),
+    )
+
+    assert code == 1
+    assert connected == []
+    assert "upload failed" in capsys.readouterr().err  # our own prefix
+
+
+def test_without_a_storage_account_nothing_is_uploaded(sample_path):
+    upload = FakeUpload()
+
+    main(
+        ["games.csv", "--local-file", str(sample_path)],
+        env=ENV,
+        connect=lambda **kwargs: FakeConnection(),
+        upload=upload,
+    )
+
+    assert upload.calls == []
+
+
+def test_the_storage_account_can_come_from_the_environment(sample_path):
+    upload = FakeUpload()
+
+    main(
+        ["--local-file", str(sample_path)],
+        env={**ENV, "AZURE_STORAGE_ACCOUNT": "fromenv"},
+        connect=lambda **kwargs: FakeConnection(),
+        upload=upload,
+    )
+
+    assert upload.calls[0][1] == "fromenv"
+
+
+def test_the_command_needs_a_file_name_or_a_local_file(capsys):
+    code = main([], env=ENV, connect=lambda **kwargs: FakeConnection())
+
+    assert code == 1
+    assert "stage_file or --local-file" in capsys.readouterr().err
+
+
+# --- the one-time setup is part of the run ----------------------------------
+
+STAGE_URL = "azure://stacct.blob.core.windows.net/capstone/games/"
+
+
+def test_the_run_creates_the_file_format_before_loading():
+    connection = FakeConnection()
+
+    run_in_snowflake(connection, "games.csv")
+
+    create = connection.statements[
+        position(connection, "CREATE OR REPLACE FILE FORMAT")
+    ]
+    assert "capstone_csv" in create
+    assert "FIELD_DELIMITER = ','" in create
+    assert "PARSE_HEADER = TRUE" in create
+    assert position(connection, "CREATE OR REPLACE FILE FORMAT") < position(
+        connection, "COPY INTO"
+    )
+
+
+def test_the_run_creates_the_stage_when_it_knows_where_the_blob_is():
+    connection = FakeConnection()
+
+    run_in_snowflake(connection, "games.csv", stage_url=STAGE_URL)
+
+    create = connection.statements[position(connection, "CREATE OR REPLACE STAGE")]
+    assert f"URL = '{STAGE_URL}'" in create
+    assert "STORAGE_INTEGRATION = azure_int" in create
+    assert position(connection, "CREATE OR REPLACE STAGE") < position(
+        connection, "COPY INTO"
+    )
+
+
+def test_without_a_blob_location_the_existing_stage_is_left_alone():
+    connection = FakeConnection()
+
+    run_in_snowflake(connection, "games.csv")
+
+    assert not ran(connection, "CREATE OR REPLACE STAGE")
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "azure://bad account.blob.core.windows.net/capstone/games/",
+        "https://stacct.blob.core.windows.net/capstone/games/",
+        "azure://stacct.blob.core.windows.net/capstone/games/'; DROP TABLE x; --",
+    ],
+)
+def test_an_unexpected_stage_url_is_refused_before_any_statement(url):
+    connection = FakeConnection()
+
+    with pytest.raises(ValueError):
+        run_in_snowflake(connection, "games.csv", stage_url=url)
+
+    assert connection.statements == []
+
+
+def test_the_command_points_the_stage_at_the_uploaded_blob(sample_path):
+    connection = FakeConnection()
+
+    main(
+        ["--local-file", str(sample_path), "--storage-account", "stacct"],
+        env=ENV,
+        connect=lambda **kwargs: connection,
+        upload=FakeUpload(),
+    )
+
+    create = connection.statements[position(connection, "CREATE OR REPLACE STAGE")]
+    assert f"URL = '{STAGE_URL}'" in create
+
+
+def test_the_setup_is_logged(caplog):
+    caplog.set_level("INFO")
+
+    run_in_snowflake(FakeConnection(), "games.csv", stage_url=STAGE_URL)
+
+    assert "file format capstone_csv ready" in caplog.text
+    assert "stage capstone_stage points at" in caplog.text
